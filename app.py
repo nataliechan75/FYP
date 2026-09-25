@@ -48,7 +48,6 @@ elif current == "game3":
     game3.render()
 
 elif current == "end":
-elif current == "end":
     st.title("🏁 收市")
     st.write(f"多謝幫手，{st.session_state.player_name}！")
     st.write("今日銀包：", st.session_state.scores)
