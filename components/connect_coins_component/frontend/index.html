@@ -210,6 +210,7 @@
   <div id="hint">💡 由最細銀碼開始，逐個連埋佢啦！</div>
   <button class="btn secondary" id="undo-btn" disabled>↩️ 撤銷</button>
   <button class="btn" id="restart-btn">🔄 重新開始</button>
+  <button class="btn" id="finish-btn" style="display:none !important;">✅ 完成</button>
 </div>
 
 <script>
@@ -522,10 +523,9 @@ function makeConnection(from, to, startTime) {
 
   document.getElementById("undo-btn").disabled = false;
 
-  if (state.connections.length === TARGET) {
-    document.getElementById("finish-btn").classList.add("show");
-    document.getElementById("hint").textContent = "✅ 完成啦！撳右邊嘅按鈕去下一關";
-  }
+ if (state.connections.length === TARGET) {
+    document.getElementById("hint").textContent = "✅ 完成啦！請向下 scroll 撳「➡️ 去下一關」";
+ }
 }
 
 // ═══════════════════════════════════════════
@@ -551,10 +551,9 @@ function undo() {
   state.undoCount++;
   document.getElementById("undo-btn").disabled = state.connections.length === 0;
 
-  if (state.connections.length < TARGET) {
-    document.getElementById("finish-btn").classList.remove("show");
+ if (state.connections.length < TARGET) {
     document.getElementById("hint").textContent = "💡 由最細銀碼開始，逐個連埋佢啦！";
-  }
+ }
 }
 
 // ═══════════════════════════════════════════
@@ -589,7 +588,6 @@ function finishGame() {
 function restart() {
   document.querySelectorAll(".coin").forEach(el => el.remove());
   document.getElementById("lines-layer").innerHTML = "";
-  document.getElementById("finish-btn").classList.remove("show");
   document.getElementById("hint").textContent = "💡 由最細銀碼開始，逐個連埋佢啦！";
 
   state = {
