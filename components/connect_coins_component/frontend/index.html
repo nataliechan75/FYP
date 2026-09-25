@@ -2,58 +2,609 @@
 <html lang="zh-HK">
 <head>
 <meta charset="UTF-8">
-<title>街市接線遊戲</title>
-
-<!-- ★ Streamlit Component Library（必須）★ -->
 <script src="https://unpkg.com/streamlit-component-lib@1.4.0/dist/streamlit-component-lib.js"></script>
-
+<title>街市接線遊戲</title>
 <style>
-  /* ... 你原本嘅 CSS ... */
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: "Noto Sans TC", "PingFang HK", "Microsoft JhengHei", sans-serif;
+    background: #2A1810;
+    color: #2B1A08;
+    font-size: 28px;
+    overflow: hidden;
+    width: 100vw;
+    height: 100vh;
+  }
+
+  #game-wrap {
+    position: relative;
+    width: 100vw;
+    height: 100vh;
+    overflow: hidden;
+  }
+
+  #bg {
+    position: absolute;
+    inset: 0;
+    background-color: #F5E6C8;
+    background-image:
+      radial-gradient(circle at 15% 25%, rgba(122, 31, 31, 0.08) 0%, transparent 45%),
+      radial-gradient(circle at 85% 75%, rgba(212, 160, 23, 0.12) 0%, transparent 50%),
+      repeating-linear-gradient(88deg,
+        rgba(90, 40, 20, 0.04) 0 2px,
+        transparent 2px 8px,
+        rgba(90, 40, 20, 0.02) 8px 12px,
+        transparent 12px 25px);
+    pointer-events: none;
+  }
+
+  #bg::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(ellipse at center,
+      transparent 40%,
+      rgba(90, 21, 21, 0.2) 100%);
+    pointer-events: none;
+  }
+
+  #canvas {
+    position: absolute;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    z-index: 1;
+    pointer-events: none;
+  }
+
+  .coin {
+    position: absolute;
+    cursor: grab;
+    user-select: none;
+    transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1),
+                filter 0.2s ease;
+    z-index: 10;
+    touch-action: none;
+    filter:
+      drop-shadow(0 6px 10px rgba(60, 30, 10, 0.4))
+      drop-shadow(0 2px 3px rgba(60, 30, 10, 0.25));
+    animation: coinDrop 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) backwards;
+  }
+
+  @keyframes coinDrop {
+    0%   { opacity: 0; transform: scale(0.3) translateY(-40px); }
+    100% { opacity: 1; transform: scale(1) translateY(0); }
+  }
+
+  .coin:hover {
+    transform: scale(1.10) rotate(-2deg);
+  }
+
+  .coin.dragging {
+    cursor: grabbing;
+    transform: scale(1.18) rotate(3deg);
+    z-index: 100;
+  }
+
+  .coin.connected {
+    filter:
+      drop-shadow(0 0 22px rgba(212, 160, 23, 0.95))
+      drop-shadow(0 0 8px rgba(240, 201, 82, 0.8))
+      drop-shadow(0 6px 10px rgba(60, 30, 10, 0.4));
+  }
+
+  .coin.highlight {
+    filter:
+      drop-shadow(0 0 26px rgba(212, 160, 23, 1))
+      drop-shadow(0 0 12px rgba(240, 201, 82, 0.9));
+    transform: scale(1.15) rotate(0deg);
+  }
+
+  .coin svg {
+    width: 100%; height: 100%;
+    pointer-events: none;
+  }
+
+  #footer {
+    position: fixed;
+    bottom: 0; left: 0; right: 0;
+    padding: 22px 40px;
+    background: linear-gradient(180deg,
+      rgba(245, 230, 200, 0.94) 0%,
+      rgba(232, 212, 168, 0.98) 100%);
+    border-top: 5px solid #7A1F1F;
+    box-shadow:
+      0 -2px 0 #D4A017,
+      0 -8px 24px rgba(90, 21, 21, 0.25);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 20px;
+    z-index: 200;
+    flex-wrap: wrap;
+  }
+
+  #hint {
+    font-size: 30px;
+    font-weight: 700;
+    color: #7A1F1F;
+    flex: 1;
+    text-shadow: 1px 1px 0 rgba(255, 255, 255, 0.5);
+  }
+
+  .btn {
+    font-family: inherit;
+    font-size: 28px;
+    font-weight: 900;
+    padding: 18px 40px;
+    border: 4px solid #5A1515;
+    border-radius: 14px;
+    background: linear-gradient(180deg, #A83232 0%, #7A1F1F 100%);
+    color: #F5E6C8;
+    cursor: pointer;
+    transition: all 0.15s cubic-bezier(0.34, 1.56, 0.64, 1);
+    min-width: 180px;
+    text-shadow: 1px 2px 0 rgba(0, 0, 0, 0.3);
+    box-shadow:
+      0 4px 0 #5A1515,
+      0 6px 12px rgba(90, 21, 21, 0.35);
+  }
+
+  .btn:hover:not(:disabled) {
+    background: linear-gradient(180deg, #F0C952 0%, #D4A017 100%);
+    color: #2B1A08;
+    transform: translateY(-3px);
+  }
+
+  .btn:disabled {
+    background: #C9B99A;
+    border-color: #8A7A58;
+    color: #6A5A40;
+    cursor: not-allowed;
+    box-shadow: 0 4px 0 #8A7A58;
+  }
+
+  .btn.secondary {
+    background: linear-gradient(180deg, #F5E6C8 0%, #E8D4A8 100%);
+    color: #7A1F1F;
+    box-shadow: 0 4px 0 #7A1F1F, 0 6px 12px rgba(90, 21, 21, 0.25);
+  }
+
+  .btn.secondary:hover:not(:disabled) {
+    background: linear-gradient(180deg, #A83232 0%, #7A1F1F 100%);
+    color: #F5E6C8;
+  }
+
+  /* ★ 完成按鈕：預設隱藏 ★ */
+  #finish-btn {
+    display: none;
+    background: linear-gradient(180deg, #F0C952 0%, #D4A017 100%);
+    color: #2B1A08;
+    animation: pulse 1.5s ease-in-out infinite;
+  }
+
+  #finish-btn.show {
+    display: inline-block;
+  }
+
+  #finish-btn:hover {
+    transform: translateY(-3px) scale(1.05);
+  }
+
+  @keyframes pulse {
+    0%, 100% { box-shadow: 0 4px 0 #5A1515, 0 6px 12px rgba(90, 21, 21, 0.35); }
+    50% { box-shadow: 0 4px 0 #5A1515, 0 6px 20px rgba(240, 201, 82, 0.7); }
+  }
 </style>
 </head>
 <body>
 
-<!-- ... 你原本嘅 HTML 結構 ... -->
+<div id="game-wrap">
+  <div id="bg"></div>
+  <svg id="canvas" xmlns="http://www.w3.org/2000/svg"
+       width="100%" height="100%">
+    <g id="lines-layer"></g>
+  </svg>
+</div>
+
+<div id="footer">
+  <div id="hint">💡 由最細銀碼開始，逐個連埋佢啦！</div>
+  <button class="btn secondary" id="undo-btn" disabled>↩️ 撤銷</button>
+  <button class="btn" id="restart-btn">🔄 重新開始</button>
+  <button class="btn" id="finish-btn">✅ 我完成咗，去下一關</button>
+</div>
 
 <script>
 // ═══════════════════════════════════════════
-// Streamlit 通訊
+// ★ Streamlit 通訊 ★
 // ═══════════════════════════════════════════
 function sendToStreamlit(data) {
-  // 通知 Streamlit：component 高度
-  Streamlit.setFrameHeight();
-
-  // 傳數據返 Python
-  Streamlit.setComponentValue(data);
+  if (typeof Streamlit !== "undefined") {
+    Streamlit.setComponentValue(data);
+  } else {
+    console.log("（測試模式）要傳去 Streamlit：", data);
+  }
 }
 
-// Component 準備好時，通知 Streamlit
-Streamlit.events.addEventListener(Streamlit.RENDER_EVENT, () => {
+if (typeof Streamlit !== "undefined") {
+  Streamlit.events.addEventListener(Streamlit.RENDER_EVENT, () => {
+    Streamlit.setFrameHeight();
+  });
   Streamlit.setFrameHeight();
-});
-
-// 初始設定
-Streamlit.setFrameHeight();
+}
 
 // ═══════════════════════════════════════════
-// 你原本嘅遊戲邏輯（貼入去）
+// 硬幣設定
 // ═══════════════════════════════════════════
-// ... 你原本嘅 JavaScript ...
+const COINS = [
+  { id: "10c", label: "一毫子", value: 0.10, c1: "#D4B584", c2: "#8B6F3A", c3: "#6A4F28", text: "10¢" },
+  { id: "1d",  label: "一蚊",   value: 1.00, c1: "#F0D580", c2: "#B08F2E", c3: "#8A6F1E", text: "$1" },
+  { id: "20c", label: "兩毫子", value: 0.20, c1: "#D4B584", c2: "#8B6F3A", c3: "#6A4F28", text: "20¢" },
+  { id: "2d",  label: "兩蚊",   value: 2.00, c1: "#F0D580", c2: "#B08F2E", c3: "#8A6F1E", text: "$2" },
+  { id: "50c", label: "五毫子", value: 0.50, c1: "#D4B584", c2: "#8B6F3A", c3: "#6A4F28", text: "50¢" },
+  { id: "5d",  label: "五蚊",   value: 5.00, c1: "#E8E8E8", c2: "#9A9A9A", c3: "#6A6A6A", text: "$5" },
+];
 
-// 改「去下一關」按鈕：
-// 原本：
-// document.getElementById("close-done").addEventListener("click", () => {
-//     window.parent.location.href = ...;
-// });
+const CORRECT_SEQUENCE = ["10c", "1d", "20c", "2d", "50c", "5d"];
+const COIN_SIZE = 130;
+const FOOTER_H = 130;
+const PADDING = 100;
+const MIN_DIST = COIN_SIZE + 40;
+const TARGET = COINS.length - 1;
 
-// 改成：
-// document.getElementById("close-done").addEventListener("click", () => {
-//     sendToStreamlit({
-//         action: "next",
-//         game: "connect_coins",
-//         completed: true,
-//     });
-// });
+let state = {
+  coins: [],
+  connections: [],
+  undoCount: 0,
+  undoEvents: [],
+  startTime: null,
+  dragging: null,
+  dragStart: null,
+};
+
+// ═══════════════════════════════════════════
+// 幾何
+// ═══════════════════════════════════════════
+function cross(o, a, b) {
+  return (a.x - o.x) * (b.y - o.y) - (a.y - o.y) * (b.x - o.x);
+}
+
+function segmentsIntersect(a, b, c, d) {
+  const d1 = cross(c, d, a);
+  const d2 = cross(c, d, b);
+  const d3 = cross(a, b, c);
+  const d4 = cross(a, b, d);
+  return ((d1 > 0 && d2 < 0) || (d1 < 0 && d2 > 0)) &&
+         ((d3 > 0 && d4 < 0) || (d3 < 0 && d4 > 0));
+}
+
+function coinCenter(c) { return { x: c.x + c.size / 2, y: c.y + c.size / 2 }; }
+
+function isInsideCoin(px, py, c) {
+  const ct = coinCenter(c);
+  return Math.hypot(px - ct.x, py - ct.y) <= (c.size / 2 + 30);
+}
+
+// ═══════════════════════════════════════════
+// 生成唔交叉排列
+// ═══════════════════════════════════════════
+function generateLayout(W, H) {
+  const SLOTS = [
+    { x: 0.15, y: 0.20 }, { x: 0.85, y: 0.20 },
+    { x: 0.50, y: 0.50 },
+    { x: 0.15, y: 0.80 }, { x: 0.85, y: 0.80 },
+    { x: 0.50, y: 0.15 },
+  ];
+  const JITTER = 40;
+
+  for (let attempt = 0; attempt < 300; attempt++) {
+    const shuffled = [...SLOTS].sort(() => Math.random() - 0.5);
+    const candidate = COINS.map((c, i) => {
+      const slot = shuffled[i];
+      const cx = slot.x * W;
+      const cy = slot.y * H;
+      const ox = (Math.random() - 0.5) * 2 * JITTER;
+      const oy = (Math.random() - 0.5) * 2 * JITTER;
+      return {
+        ...c, size: COIN_SIZE,
+        x: cx + ox - COIN_SIZE / 2,
+        y: cy + oy - COIN_SIZE / 2,
+        connectedFrom: false, connectedTo: false, el: null,
+      };
+    });
+    if (sequenceHasNoCrossing(candidate, CORRECT_SEQUENCE)) return candidate;
+  }
+
+  // Fallback
+  return COINS.map((c, i) => {
+    const slot = SLOTS[i];
+    return {
+      ...c, size: COIN_SIZE,
+      x: slot.x * W - COIN_SIZE / 2,
+      y: slot.y * H - COIN_SIZE / 2,
+      connectedFrom: false, connectedTo: false, el: null,
+    };
+  });
+}
+
+function sequenceHasNoCrossing(coins, seq) {
+  const lines = [];
+  for (let i = 0; i < seq.length - 1; i++) {
+    const a = coins.find(c => c.id === seq[i]);
+    const b = coins.find(c => c.id === seq[i + 1]);
+    if (!a || !b) return false;
+    lines.push({ a: coinCenter(a), b: coinCenter(b) });
+  }
+  for (let i = 0; i < lines.length; i++) {
+    for (let j = i + 1; j < lines.length; j++) {
+      if (j === i + 1) continue;
+      if (segmentsIntersect(lines[i].a, lines[i].b, lines[j].a, lines[j].b)) return false;
+    }
+  }
+  return true;
+}
+
+// ═══════════════════════════════════════════
+// 硬幣 SVG
+// ═══════════════════════════════════════════
+function coinSvg(c) {
+  const gid = "g-" + c.id + "-" + Math.random().toString(36).slice(2, 6);
+  const sid = "s-" + c.id + "-" + Math.random().toString(36).slice(2, 6);
+  const s = c.size;
+  return `
+    <svg viewBox="0 0 200 200" width="${s}" height="${s}" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <radialGradient id="${gid}" cx="35%" cy="30%" r="80%">
+          <stop offset="0%" stop-color="#FFFBE8"/>
+          <stop offset="25%" stop-color="${c.c1}"/>
+          <stop offset="70%" stop-color="${c.c2}"/>
+          <stop offset="100%" stop-color="${c.c3}"/>
+        </radialGradient>
+        <linearGradient id="${sid}" x1="20%" y1="10%" x2="80%" y2="90%">
+          <stop offset="0%" stop-color="#FFF" stop-opacity=".5"/>
+          <stop offset="50%" stop-color="#FFF" stop-opacity="0"/>
+          <stop offset="100%" stop-color="#000" stop-opacity=".15"/>
+        </linearGradient>
+      </defs>
+      <circle cx="100" cy="100" r="98" fill="${c.c3}" opacity=".7"/>
+      <circle cx="100" cy="100" r="94" fill="url(#${gid})" stroke="${c.c3}" stroke-width="2.5"/>
+      <circle cx="100" cy="100" r="88" fill="none" stroke="${c.c3}" stroke-width="2" stroke-dasharray="2 3" opacity=".7"/>
+      <circle cx="100" cy="100" r="78" fill="none" stroke="${c.c2}" stroke-width="1.5" opacity=".6"/>
+      <circle cx="100" cy="100" r="94" fill="url(#${sid})" opacity=".8"/>
+      <text x="100" y="118" text-anchor="middle"
+            font-family="Arial Black, sans-serif" font-size="54" font-weight="900"
+            fill="#2B1A08">${c.text}</text>
+      <ellipse cx="66" cy="58" rx="26" ry="16" fill="#FFF" opacity=".55" transform="rotate(-25 66 58)"/>
+    </svg>
+  `;
+}
+
+// ═══════════════════════════════════════════
+// 初始化
+// ═══════════════════════════════════════════
+function init() {
+  const svg = document.getElementById("canvas");
+  svg.setAttribute("width", window.innerWidth);
+  svg.setAttribute("height", window.innerHeight);
+  svg.setAttribute("viewBox", `0 0 ${window.innerWidth} ${window.innerHeight}`);
+
+  const wrap = document.getElementById("game-wrap");
+  const W = wrap.clientWidth;
+  const H = wrap.clientHeight - FOOTER_H;
+
+  state.coins = generateLayout(W, H);
+
+  state.coins.forEach(c => {
+    const el = document.createElement("div");
+    el.className = "coin";
+    el.style.left = c.x + "px";
+    el.style.top = c.y + "px";
+    el.style.width = c.size + "px";
+    el.style.height = c.size + "px";
+    el.innerHTML = coinSvg(c);
+    el.dataset.coinId = c.id;
+    el.addEventListener("pointerdown", onCoinPointerDown);
+    wrap.appendChild(el);
+    c.el = el;
+  });
+
+  document.getElementById("undo-btn").addEventListener("click", undo);
+  document.getElementById("restart-btn").addEventListener("click", restart);
+  document.getElementById("finish-btn").addEventListener("click", finishGame);
+
+  state.startTime = performance.now();
+}
+
+// ═══════════════════════════════════════════
+// 拖曳
+// ═══════════════════════════════════════════
+function onCoinPointerDown(e) {
+  e.preventDefault();
+  const id = e.currentTarget.dataset.coinId;
+  const c = state.coins.find(x => x.id === id);
+  if (!c || c.connectedFrom) return;
+
+  c.el.classList.add("dragging");
+  state.dragging = c;
+  state.dragStart = performance.now();
+
+  const a = coinCenter(c);
+  const layer = document.getElementById("lines-layer");
+  const line = document.createElementNS("http://www.w3.org/2000/svg", "line");
+  line.setAttribute("x1", a.x); line.setAttribute("y1", a.y);
+  line.setAttribute("x2", e.clientX); line.setAttribute("y2", e.clientY);
+  line.setAttribute("stroke", "#7A1F1F");
+  line.setAttribute("stroke-width", "10");
+  line.setAttribute("stroke-linecap", "round");
+  line.setAttribute("stroke-dasharray", "16 10");
+  line.setAttribute("opacity", "0.9");
+  line.id = "ghost";
+  layer.appendChild(line);
+
+  document.addEventListener("pointermove", onPointerMove);
+  document.addEventListener("pointerup", onPointerUp);
+}
+
+function onPointerMove(e) {
+  const line = document.getElementById("ghost");
+  if (!line) return;
+  line.setAttribute("x2", e.clientX);
+  line.setAttribute("y2", e.clientY);
+
+  state.coins.forEach(c => {
+    c.el.classList.remove("highlight");
+    if (!c.connectedTo && c !== state.dragging && isInsideCoin(e.clientX, e.clientY, c)) {
+      c.el.classList.add("highlight");
+    }
+  });
+}
+
+function onPointerUp(e) {
+  const from = state.dragging;
+  if (!from) return;
+
+  from.el.classList.remove("dragging");
+  state.coins.forEach(c => c.el.classList.remove("highlight"));
+
+  const ghost = document.getElementById("ghost");
+  if (ghost) ghost.remove();
+
+  const target = state.coins.find(c =>
+    !c.connectedTo && c !== from && isInsideCoin(e.clientX, e.clientY, c)
+  );
+
+  if (target) makeConnection(from, target, state.dragStart);
+
+  state.dragging = null;
+  state.dragStart = null;
+  document.removeEventListener("pointermove", onPointerMove);
+  document.removeEventListener("pointerup", onPointerUp);
+}
+
+// ═══════════════════════════════════════════
+// 連線
+// ═══════════════════════════════════════════
+function makeConnection(from, to, startTime) {
+  const layer = document.getElementById("lines-layer");
+  const a = coinCenter(from);
+  const b = coinCenter(to);
+  const time = (performance.now() - startTime) / 1000;
+
+  const SEG = 8, JIT = 3;
+  const pts = [];
+  for (let i = 0; i <= SEG; i++) {
+    const t = i / SEG;
+    let px = a.x + (b.x - a.x) * t;
+    let py = a.y + (b.y - a.y) * t;
+    if (i > 0 && i < SEG) {
+      px += (Math.random() - .5) * 2 * JIT;
+      py += (Math.random() - .5) * 2 * JIT;
+    }
+    pts.push([px, py]);
+  }
+  const d = "M " + pts.map(p => `${p[0]} ${p[1]}`).join(" L ");
+
+  [["#D4A017", 16, .25], ["#5A1515", 12, .85], ["#A83232", 7, 1]]
+    .forEach(([color, w, op]) => {
+      const p = document.createElementNS("http://www.w3.org/2000/svg", "path");
+      p.setAttribute("d", d);
+      p.setAttribute("stroke", color);
+      p.setAttribute("stroke-width", w);
+      p.setAttribute("stroke-linecap", "round");
+      p.setAttribute("stroke-linejoin", "round");
+      p.setAttribute("fill", "none");
+      p.setAttribute("opacity", op);
+      layer.appendChild(p);
+    });
+
+  state.connections.push({ from: from.id, to: to.id, time });
+  from.connectedFrom = true;
+  to.connectedTo = true;
+  from.el.classList.add("connected");
+  to.el.classList.add("connected");
+
+  document.getElementById("undo-btn").disabled = false;
+
+  if (state.connections.length === TARGET) {
+    // ★ 顯示「完成」按鈕 ★
+    document.getElementById("finish-btn").classList.add("show");
+    document.getElementById("hint").textContent = "✅ 完成啦！撳右邊嘅按鈕去下一關";
+  }
+}
+
+// ═══════════════════════════════════════════
+// Undo
+// ═══════════════════════════════════════════
+function undo() {
+  if (state.connections.length === 0) return;
+  state.connections.pop();
+
+  const layer = document.getElementById("lines-layer");
+  for (let i = 0; i < 3; i++) {
+    if (layer.lastChild) layer.removeChild(layer.lastChild);
+  }
+
+  const still = new Set();
+  state.connections.forEach(c => { still.add(c.from); still.add(c.to); });
+  state.coins.forEach(c => {
+    c.connectedFrom = state.connections.some(x => x.from === c.id);
+    c.connectedTo = state.connections.some(x => x.to === c.id);
+    c.el.classList.toggle("connected", still.has(c.id));
+  });
+
+  state.undoCount++;
+  document.getElementById("undo-btn").disabled = state.connections.length === 0;
+
+  // 如果 undo 之後唔夠 5 條，隱藏完成按鈕
+  if (state.connections.length < TARGET) {
+    document.getElementById("finish-btn").classList.remove("show");
+    document.getElementById("hint").textContent = "💡 由最細銀碼開始，逐個連埋佢啦！";
+  }
+}
+
+// ═══════════════════════════════════════════
+// 完成
+// ═══════════════════════════════════════════
+function finishGame() {
+  const totalTime = (performance.now() - state.startTime) / 1000;
+  const seq = state.connections.length ? [state.connections[0].from] : [];
+  state.connections.forEach(c => seq.push(c.to));
+  const isCorrect = JSON.stringify(seq) === JSON.stringify(CORRECT_SEQUENCE);
+
+  const result = {
+    game_id: "connect_coins",
+    completed: true,
+    total_time_sec: parseFloat(totalTime.toFixed(2)),
+    sequence: seq,
+    connections: state.connections,
+    undo_count: state.undoCount,
+    is_correct: isCorrect,
+    correct_sequence: CORRECT_SEQUENCE,
+  };
+
+  console.log("=== 傳去 Streamlit ===");
+  console.log(JSON.stringify(result, null, 2));
+
+  sendToStreamlit(result);
+}
+
+// ═══════════════════════════════════════════
+// 重新開始
+// ═══════════════════════════════════════════
+function restart() {
+  document.querySelectorAll(".coin").forEach(el => el.remove());
+  document.getElementById("lines-layer").innerHTML = "";
+  document.getElementById("finish-btn").classList.remove("show");
+  document.getElementById("hint").textContent = "💡 由最細銀碼開始，逐個連埋佢啦！";
+
+  state = {
+    coins: [], connections: [], undoCount: 0, undoEvents: [],
+    startTime: null, dragging: null, dragStart: null,
+  };
+  init();
+}
+
+window.addEventListener("load", init);
 </script>
 </body>
 </html>
