@@ -318,7 +318,7 @@
   <div id="done-card">
     <h2>🎉 完成啦！</h2>
     <p>阿婆好滿意！</p>
-    <button class="btn" id="close-done">知道啦</button>
+    <button class="btn" id="close-done">➡️ 去下一關</button>
   </div>
 </div>
 
@@ -878,7 +878,17 @@ function bindEvents() {
   document.getElementById("undo-btn").addEventListener("click", undo);
   document.getElementById("restart-btn").addEventListener("click", restart);
   document.getElementById("close-done").addEventListener("click", () => {
-    document.getElementById("done-panel").classList.remove("show");
+    // 通知 Streamlit：玩家完成咗
+    try {
+      const url = new URL(window.parent.location);
+      url.searchParams.set("game_done", "connect_coins");
+      window.parent.location.href = url.toString();
+    } catch (e) {
+      // 喺 VS Code Live Server 測試（冇 parent iframe）
+      console.log("（測試模式）完成！", e);
+      document.getElementById("done-panel").classList.remove("show");
+      alert("（測試模式）遊戲完成！");
+    }
   });
 }
 
