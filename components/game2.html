@@ -1,0 +1,390 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+<head>
+<meta charset="UTF-8">
+<title>畫購物籃</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: "Noto Sans TC", "PingFang HK", sans-serif;
+    background: #F5E6C8;
+    color: #2B1A08;
+    overflow: hidden;
+    width: 100vw;
+    height: 100vh;
+    font-size: 24px;
+  }
+
+  #wrap {
+    display: flex;
+    flex-direction: column;
+    width: 100vw;
+    height: 100vh;
+    padding: 16px;
+    gap: 12px;
+  }
+
+  #prompt {
+    background: linear-gradient(180deg, #A83232, #7A1F1F);
+    color: #F5E6C8;
+    padding: 16px 24px;
+    border-radius: 14px;
+    border: 3px solid #D4A017;
+    font-size: 26px;
+    font-weight: 700;
+    text-align: center;
+    box-shadow: 0 4px 12px rgba(90,21,21,0.3);
+    flex-shrink: 0;
+  }
+
+  #reference {
+    background: linear-gradient(180deg, #FFF8E7, #F5E6C8);
+    border: 4px solid #7A1F1F;
+    border-radius: 14px;
+    padding: 16px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 36vh;
+    position: relative;
+    flex-shrink: 0;
+  }
+
+  #reference::before {
+    content: "📖 參考圖";
+    position: absolute;
+    top: 8px;
+    left: 16px;
+    font-size: 18px;
+    font-weight: 700;
+    color: #7A1F1F;
+    opacity: 0.7;
+  }
+
+  #reference svg {
+    height: 100%;
+    max-height: 30vh;
+  }
+
+  #canvas-wrap {
+    flex: 1;
+    background: #FFFEF8;
+    border: 4px dashed #7A1F1F;
+    border-radius: 14px;
+    position: relative;
+    overflow: hidden;
+    box-shadow: inset 0 2px 8px rgba(90,21,21,0.1);
+  }
+
+  #canvas-wrap::before {
+    content: "✏️ 喺呢度畫";
+    position: absolute;
+    top: 8px;
+    left: 16px;
+    font-size: 18px;
+    font-weight: 700;
+    color: #7A1F1F;
+    opacity: 0.5;
+    pointer-events: none;
+  }
+
+  #canvas {
+    width: 100%;
+    height: 100%;
+    cursor: crosshair;
+    touch-action: none;
+  }
+
+  #footer {
+    display: flex;
+    gap: 12px;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+
+  .btn {
+    font-family: inherit;
+    font-size: 24px;
+    font-weight: 800;
+    padding: 16px 36px;
+    border: 4px solid #5A1515;
+    border-radius: 14px;
+    background: linear-gradient(180deg, #A83232, #7A1F1F);
+    color: #F5E6C8;
+    cursor: pointer;
+    min-width: 160px;
+    box-shadow: 0 4px 0 #5A1515, 0 6px 12px rgba(90,21,21,0.3);
+  }
+
+  .btn:hover {
+    background: linear-gradient(180deg, #F0C952, #D4A017);
+    color: #2B1A08;
+    transform: translateY(-2px);
+  }
+
+  .btn.secondary {
+    background: linear-gradient(180deg, #F5E6C8, #E8D4A8);
+    color: #7A1F1F;
+    box-shadow: 0 4px 0 #7A1F1F, 0 6px 12px rgba(90,21,21,0.2);
+  }
+
+  .btn:disabled {
+    background: #C9B99A;
+    border-color: #8A7A58;
+    color: #6A5A40;
+    cursor: not-allowed;
+    box-shadow: 0 4px 0 #8A7A58;
+  }
+
+  #done-panel {
+    position: fixed;
+    inset: 0;
+    background: rgba(42,24,16,0.9);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 999999;
+    padding: 24px;
+  }
+
+  #done-panel.show { display: flex !important; }
+
+  #done-card {
+    background: linear-gradient(180deg, #F5E6C8, #E8D4A8);
+    border: 6px solid #7A1F1F;
+    border-radius: 24px;
+    padding: 32px 40px;
+    max-width: 600px;
+    max-height: 90vh;
+    overflow-y: auto;
+    text-align: center;
+    box-shadow: 0 0 0 8px #D4A017, 0 30px 80px rgba(0,0,0,0.6);
+  }
+
+  #done-card h2 {
+    font-size: 44px;
+    color: #7A1F1F;
+    margin-bottom: 12px;
+  }
+
+  #done-card p {
+    font-size: 26px;
+    color: #5A4030;
+    margin-bottom: 20px;
+  }
+
+  #player-drawing {
+    background: #FFFEF8;
+    border: 4px solid #7A1F1F;
+    border-radius: 12px;
+    margin: 20px auto;
+    padding: 8px;
+    max-width: 340px;
+    box-shadow: inset 0 2px 6px rgba(90,21,21,0.1);
+  }
+
+  #player-drawing img {
+    width: 100%;
+    display: block;
+  }
+
+  #done-card .btn {
+    width: 100%;
+    margin-top: 20px;
+  }
+</style>
+</head>
+<body>
+
+<div id="wrap">
+  <div id="prompt">
+    🧺 阿婆話：「跟住呢個購物籃畫返出嚟，越準確越好！」
+  </div>
+
+  <div id="reference">
+    <!-- ★ 清晰線條立方體（當作購物籃）★ -->
+    <svg viewBox="0 0 280 280" xmlns="http://www.w3.org/2000/svg">
+      <g stroke="#2B1A08" stroke-width="6" fill="none"
+         stroke-linecap="round" stroke-linejoin="round">
+
+        <!-- 前面正方形 -->
+        <rect x="60" y="100" width="140" height="140"/>
+
+        <!-- 後面正方形 -->
+        <rect x="110" y="50" width="140" height="140"/>
+
+        <!-- 連接線（四角） -->
+        <line x1="60" y1="100" x2="110" y2="50"/>
+        <line x1="200" y1="100" x2="250" y2="50"/>
+        <line x1="60" y1="240" x2="110" y2="190"/>
+        <line x1="200" y1="240" x2="250" y2="190"/>
+      </g>
+    </svg>
+  </div>
+
+  <div id="canvas-wrap">
+    <canvas id="canvas"></canvas>
+  </div>
+
+  <div id="footer">
+    <button class="btn secondary" id="clear-btn">🔄 清除</button>
+    <button class="btn" id="done-btn" disabled>✅ 完成</button>
+  </div>
+</div>
+
+<div id="done-panel">
+  <div id="done-card">
+    <h2>🎉 畫得好靚！</h2>
+    <p>呢個就係你畫嘅購物籃：</p>
+
+    <div id="player-drawing">
+      <img id="player-img" alt="玩家畫嘅購物籃">
+    </div>
+
+    <button class="btn" id="next-btn">➡️ 去下一關</button>
+  </div>
+</div>
+
+<script>
+// ═══════════════════════════════════════════
+// 畫布設定
+// ═══════════════════════════════════════════
+const canvas = document.getElementById("canvas");
+const ctx = canvas.getContext("2d");
+
+let isDrawing = false;
+let hasDrawn = false;
+let strokes = [];
+let currentStroke = null;
+
+function resizeCanvas() {
+  const wrap = document.getElementById("canvas-wrap");
+  const rect = wrap.getBoundingClientRect();
+  const dpr = window.devicePixelRatio || 1;
+
+  canvas.width = rect.width * dpr;
+  canvas.height = rect.height * dpr;
+  canvas.style.width = rect.width + "px";
+  canvas.style.height = rect.height + "px";
+
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  ctx.lineWidth = 3;
+  ctx.lineCap = "round";
+  ctx.lineJoin = "round";
+  ctx.strokeStyle = "#2B1A08";
+
+  redraw();
+}
+
+window.addEventListener("load", resizeCanvas);
+window.addEventListener("resize", resizeCanvas);
+
+// ═══════════════════════════════════════════
+// 繪畫
+// ═══════════════════════════════════════════
+function getPos(e) {
+  const rect = canvas.getBoundingClientRect();
+  return {
+    x: e.clientX - rect.left,
+    y: e.clientY - rect.top,
+  };
+}
+
+function startDraw(e) {
+  e.preventDefault();
+  isDrawing = true;
+  const pos = getPos(e);
+  currentStroke = [pos];
+  ctx.beginPath();
+  ctx.moveTo(pos.x, pos.y);
+}
+
+function moveDraw(e) {
+  if (!isDrawing) return;
+  e.preventDefault();
+  const pos = getPos(e);
+  currentStroke.push(pos);
+  ctx.lineTo(pos.x, pos.y);
+  ctx.stroke();
+  hasDrawn = true;
+  document.getElementById("done-btn").disabled = false;
+}
+
+function endDraw(e) {
+  if (!isDrawing) return;
+  isDrawing = false;
+  if (currentStroke && currentStroke.length > 0) {
+    strokes.push(currentStroke);
+  }
+  currentStroke = null;
+}
+
+canvas.addEventListener("pointerdown", startDraw);
+canvas.addEventListener("pointermove", moveDraw);
+canvas.addEventListener("pointerup", endDraw);
+canvas.addEventListener("pointercancel", endDraw);
+canvas.addEventListener("pointerleave", endDraw);
+
+// ═══════════════════════════════════════════
+// 重繪
+// ═══════════════════════════════════════════
+function redraw() {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  strokes.forEach(stroke => {
+    if (stroke.length === 0) return;
+    ctx.beginPath();
+    ctx.moveTo(stroke[0].x, stroke[0].y);
+    for (let i = 1; i < stroke.length; i++) {
+      ctx.lineTo(stroke[i].x, stroke[i].y);
+    }
+    ctx.stroke();
+  });
+}
+
+// ═══════════════════════════════════════════
+// 清除
+// ═══════════════════════════════════════════
+document.getElementById("clear-btn").addEventListener("click", () => {
+  strokes = [];
+  hasDrawn = false;
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  document.getElementById("done-btn").disabled = true;
+});
+
+// ═══════════════════════════════════════════
+// 完成
+// ═══════════════════════════════════════════
+document.getElementById("done-btn").addEventListener("click", () => {
+  const dataURL = canvas.toDataURL("image/png");
+  document.getElementById("player-img").src = dataURL;
+
+  document.getElementById("done-panel").classList.add("show");
+
+  const result = {
+    game_id: "game2",
+    completed: true,
+    stroke_count: strokes.length,
+    total_points: strokes.reduce((sum, s) => sum + s.length, 0),
+  };
+  console.log("=== 遊戲結果 ===");
+  console.log(JSON.stringify(result, null, 2));
+});
+
+// ═══════════════════════════════════════════
+// 去下一關
+// ═══════════════════════════════════════════
+document.getElementById("next-btn").addEventListener("click", () => {
+  try {
+    const url = new URL(window.parent.location);
+    url.searchParams.set("game_done", "game2");
+    window.parent.location.href = url.toString();
+  } catch (e) {
+    console.log("（測試模式）完成！", e);
+    document.getElementById("done-panel").classList.remove("show");
+    alert("（測試模式）遊戲完成！");
+  }
+});
+</script>
+</body>
+</html>
