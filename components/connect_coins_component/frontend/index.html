@@ -1,1 +1,59 @@
-placeholder
+<!DOCTYPE html>
+<html lang="zh-HK">
+<head>
+<meta charset="UTF-8">
+<title>街市接線遊戲</title>
+
+<!-- ★ Streamlit Component Library（必須）★ -->
+<script src="https://unpkg.com/streamlit-component-lib@1.4.0/dist/streamlit-component-lib.js"></script>
+
+<style>
+  /* ... 你原本嘅 CSS ... */
+</style>
+</head>
+<body>
+
+<!-- ... 你原本嘅 HTML 結構 ... -->
+
+<script>
+// ═══════════════════════════════════════════
+// Streamlit 通訊
+// ═══════════════════════════════════════════
+function sendToStreamlit(data) {
+  // 通知 Streamlit：component 高度
+  Streamlit.setFrameHeight();
+
+  // 傳數據返 Python
+  Streamlit.setComponentValue(data);
+}
+
+// Component 準備好時，通知 Streamlit
+Streamlit.events.addEventListener(Streamlit.RENDER_EVENT, () => {
+  Streamlit.setFrameHeight();
+});
+
+// 初始設定
+Streamlit.setFrameHeight();
+
+// ═══════════════════════════════════════════
+// 你原本嘅遊戲邏輯（貼入去）
+// ═══════════════════════════════════════════
+// ... 你原本嘅 JavaScript ...
+
+// 改「去下一關」按鈕：
+// 原本：
+// document.getElementById("close-done").addEventListener("click", () => {
+//     window.parent.location.href = ...;
+// });
+
+// 改成：
+// document.getElementById("close-done").addEventListener("click", () => {
+//     sendToStreamlit({
+//         action: "next",
+//         game: "connect_coins",
+//         completed: true,
+//     });
+// });
+</script>
+</body>
+</html>
