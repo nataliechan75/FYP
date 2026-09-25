@@ -1,6 +1,6 @@
 import streamlit as st
 from core.state import init_state, next_game
-from games import connect_coins, game2
+from games import connect_coins, game2, game3
 
 st.set_page_config(
     page_title="舊香港街市 · 銀碼大挑戰",
@@ -44,6 +44,10 @@ elif current == "connect_coins":
 elif current == "game2":
     game2.render()
 
+elif current == "game3":
+    game3.render()
+
+elif current == "end":
 elif current == "end":
     st.title("🏁 收市")
     st.write(f"多謝幫手，{st.session_state.player_name}！")
