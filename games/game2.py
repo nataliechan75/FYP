@@ -6,15 +6,6 @@ from pathlib import Path
 
 
 def render():
-    # 檢查係咪完成咗
-    if st.query_params.get("game_done") == "game2":
-        st.query_params.clear()
-        st.session_state.scores["game2"] = {"completed": True}
-        from core.state import next_game
-        next_game()
-        return
-
-    # 載入 HTML
     html_path = Path(__file__).parent.parent / "components" / "game2.html"
 
     if not html_path.exists():
@@ -28,3 +19,10 @@ def render():
         height=900,
         scrolling=False,
     )
+
+    st.divider()
+    col1, col2, col3 = st.columns([1, 2, 1])
+    with col2:
+        if st.button("➡️ 去下一關", use_container_width=True, type="primary"):
+            from core.state import next_game
+            next_game()
