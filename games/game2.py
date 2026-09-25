@@ -16,13 +16,12 @@ def render():
 
     st.components.v1.html(
         html_content,
-        height=900,
+        height=800,
         scrolling=False,
     )
 
-    st.divider()
     col1, col2, col3 = st.columns([1, 2, 1])
     with col2:
-        if st.button("➡️ 去下一關", use_container_width=True, type="primary"):
+        if st.button("➡️ 去下一關", use_container_width=True, type="primary", key="next_2"):
             from core.state import next_game
             next_game()
