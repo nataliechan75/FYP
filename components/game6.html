@@ -1,0 +1,681 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+<head>
+<meta charset="UTF-8">
+<title>抽象概念</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: "Noto Sans TC", "PingFang HK", sans-serif;
+    background: #F5E6C8;
+    color: #2B1A08;
+    overflow: hidden;
+    width: 100vw;
+    height: 100vh;
+    font-size: 24px;
+  }
+
+  /* 階段 1 */
+  #stage1 {
+    display: flex;
+    flex-direction: column;
+    width: 100vw;
+    height: 100vh;
+    padding: 24px;
+    gap: 20px;
+    justify-content: center;
+    align-items: center;
+    overflow-y: auto;
+  }
+
+  #granny {
+    font-size: 100px;
+    animation: bounce 2s ease-in-out infinite;
+    filter: drop-shadow(0 10px 20px rgba(90,21,21,0.3));
+    flex-shrink: 0;
+  }
+
+  @keyframes bounce {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-15px); }
+  }
+
+  #granny-speech {
+    background: linear-gradient(180deg, #FFF8E7, #E8D4A8);
+    border: 5px solid #7A1F1F;
+    border-radius: 24px;
+    padding: 28px 40px;
+    max-width: 700px;
+    text-align: center;
+    font-size: 28px;
+    font-weight: 700;
+    color: #7A1F1F;
+    line-height: 1.6;
+    position: relative;
+    box-shadow: 0 10px 30px rgba(90,21,21,0.3);
+  }
+
+  #granny-speech::before {
+    content: "";
+    position: absolute;
+    top: -25px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 0; height: 0;
+    border-left: 20px solid transparent;
+    border-right: 20px solid transparent;
+    border-bottom: 25px solid #7A1F1F;
+  }
+
+  #granny-speech::after {
+    content: "";
+    position: absolute;
+    top: -18px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 0; height: 0;
+    border-left: 15px solid transparent;
+    border-right: 15px solid transparent;
+    border-bottom: 20px solid #FFF8E7;
+  }
+
+  /* 例子框 */
+  #example-box {
+    background: #FFFEF8;
+    border: 4px dashed #7A1F1F;
+    border-radius: 14px;
+    padding: 20px 28px;
+    max-width: 700px;
+    text-align: left;
+    font-size: 24px;
+    color: #2B1A08;
+    line-height: 1.7;
+  }
+
+  #example-box .label {
+    font-size: 20px;
+    font-weight: 700;
+    color: #7A1F1F;
+    margin-bottom: 8px;
+  }
+
+  #example-box .q {
+    font-weight: 700;
+    color: #2B1A08;
+  }
+
+  #example-box .a {
+    color: #5A4030;
+    margin-top: 4px;
+  }
+
+  #example-box .a::before {
+    content: "→ ";
+    color: #7A1F1F;
+    font-weight: 700;
+  }
+
+  #start-btn {
+    font-family: inherit;
+    font-size: 32px;
+    font-weight: 900;
+    padding: 24px 60px;
+    border: 5px solid #5A1515;
+    border-radius: 16px;
+    background: linear-gradient(180deg, #F0C952 0%, #D4A017 100%);
+    color: #2B1A08;
+    cursor: pointer;
+    min-width: 240px;
+    box-shadow: 0 6px 0 #5A1515, 0 10px 20px rgba(90,21,21,0.35);
+    flex-shrink: 0;
+  }
+
+  #start-btn:hover { transform: translateY(-4px); }
+
+  /* 階段 2 */
+  #stage2 {
+    display: none;
+    flex-direction: column;
+    width: 100vw;
+    height: 100vh;
+    padding: 20px 32px;
+    gap: 16px;
+  }
+
+  #stage2.show { display: flex !important; }
+
+  #progress {
+    display: flex;
+    justify-content: center;
+    gap: 12px;
+    padding: 8px 0;
+    flex-shrink: 0;
+  }
+
+  .step-dot {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    background: #E8D4A8;
+    border: 3px solid #7A1F1F;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 900;
+    font-size: 22px;
+    color: #7A1F1F;
+  }
+
+  .step-dot.active {
+    background: linear-gradient(180deg, #F0C952, #D4A017);
+    transform: scale(1.15);
+    box-shadow: 0 4px 12px rgba(212,160,23,0.5);
+  }
+
+  .step-dot.done {
+    background: linear-gradient(180deg, #A83232, #7A1F1F);
+    color: #F5E6C8;
+  }
+
+  #read-area {
+    background: linear-gradient(180deg, #FFF8E7, #E8D4A8);
+    border: 4px solid #7A1F1F;
+    border-radius: 14px;
+    padding: 20px;
+    text-align: center;
+    flex-shrink: 0;
+  }
+
+  #read-label {
+    font-size: 22px;
+    color: #7A1F1F;
+    margin-bottom: 12px;
+    font-weight: 700;
+  }
+
+  #read-btn {
+    font-family: inherit;
+    font-size: 30px;
+    font-weight: 900;
+    padding: 18px 44px;
+    border: 5px solid #5A1515;
+    border-radius: 16px;
+    background: linear-gradient(180deg, #A83232, #7A1F1F);
+    color: #F5E6C8;
+    cursor: pointer;
+    min-width: 260px;
+    box-shadow: 0 6px 0 #5A1515, 0 10px 20px rgba(90,21,21,0.35);
+  }
+
+  #read-btn:hover:not(:disabled) { transform: translateY(-3px); }
+
+  #read-btn:disabled {
+    background: #C9B99A;
+    border-color: #8A7A58;
+    color: #6A5A40;
+    cursor: not-allowed;
+    box-shadow: 0 4px 0 #8A7A58;
+  }
+
+  #read-btn.playing {
+    background: linear-gradient(180deg, #F0C952, #D4A017);
+    color: #2B1A08;
+    animation: pulse 1s infinite;
+  }
+
+  @keyframes pulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+  }
+
+  #record-area {
+    flex: 1;
+    background: #FFFEF8;
+    border: 4px solid #7A1F1F;
+    border-radius: 14px;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    min-height: 0;
+  }
+
+  #record-label {
+    font-size: 22px;
+    color: #7A1F1F;
+    font-weight: 700;
+  }
+
+  #recognized-text {
+    flex: 1;
+    background: #F5E6C8;
+    border: 3px dashed #7A1F1F;
+    border-radius: 12px;
+    padding: 20px;
+    font-size: 32px;
+    font-weight: 700;
+    color: #2B1A08;
+    overflow-y: auto;
+    line-height: 1.5;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+  }
+
+  #recognized-text.empty {
+    color: #8A7A58;
+    font-size: 24px;
+    font-weight: 400;
+  }
+
+  #record-controls {
+    display: flex;
+    justify-content: center;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+
+  .mic-btn {
+    font-family: inherit;
+    font-size: 26px;
+    font-weight: 900;
+    padding: 18px 40px;
+    border: 5px solid #5A1515;
+    border-radius: 16px;
+    background: linear-gradient(180deg, #A83232, #7A1F1F);
+    color: #F5E6C8;
+    cursor: pointer;
+    min-width: 200px;
+    box-shadow: 0 6px 0 #5A1515, 0 10px 20px rgba(90,21,21,0.35);
+  }
+
+  .mic-btn:hover:not(:disabled) { transform: translateY(-3px); }
+
+  .mic-btn:disabled {
+    background: #C9B99A;
+    border-color: #8A7A58;
+    color: #6A5A40;
+    cursor: not-allowed;
+    box-shadow: 0 4px 0 #8A7A58;
+  }
+
+  .mic-btn.recording {
+    background: linear-gradient(180deg, #FF4444, #A83232);
+    animation: pulse 1s infinite;
+  }
+
+  .mic-btn.retry {
+    background: linear-gradient(180deg, #F5E6C8, #E8D4A8);
+    color: #7A1F1F;
+    box-shadow: 0 6px 0 #7A1F1F, 0 10px 20px rgba(90,21,21,0.25);
+  }
+
+  .mic-btn.retry:hover:not(:disabled) {
+    background: linear-gradient(180deg, #A83232, #7A1F1F);
+    color: #F5E6C8;
+  }
+
+  #footer {
+    display: flex;
+    justify-content: center;
+    gap: 16px;
+    flex-shrink: 0;
+    padding-top: 8px;
+  }
+
+  .btn {
+    font-family: inherit;
+    font-size: 26px;
+    font-weight: 800;
+    padding: 18px 40px;
+    border: 4px solid #5A1515;
+    border-radius: 14px;
+    background: linear-gradient(180deg, #A83232, #7A1F1F);
+    color: #F5E6C8;
+    cursor: pointer;
+    min-width: 220px;
+    box-shadow: 0 4px 0 #5A1515, 0 6px 12px rgba(90,21,21,0.3);
+  }
+
+  .btn:hover:not(:disabled) {
+    background: linear-gradient(180deg, #F0C952, #D4A017);
+    color: #2B1A08;
+    transform: translateY(-2px);
+  }
+
+  .btn:disabled {
+    background: #C9B99A;
+    border-color: #8A7A58;
+    color: #6A5A40;
+    cursor: not-allowed;
+    box-shadow: 0 4px 0 #8A7A58;
+  }
+
+  #done-panel {
+    position: fixed;
+    inset: 0;
+    background: rgba(42,24,16,0.9);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 999999;
+    padding: 24px;
+  }
+
+  #done-panel.show { display: flex !important; }
+
+  #done-card {
+    background: linear-gradient(180deg, #F5E6C8, #E8D4A8);
+    border: 6px solid #7A1F1F;
+    border-radius: 24px;
+    padding: 40px 48px;
+    max-width: 640px;
+    text-align: center;
+    box-shadow: 0 0 0 8px #D4A017, 0 30px 80px rgba(0,0,0,0.6);
+  }
+
+  #done-card h2 {
+    font-size: 48px;
+    color: #7A1F1F;
+    margin-bottom: 20px;
+  }
+
+  #done-card p {
+    font-size: 26px;
+    color: #5A4030;
+    line-height: 1.6;
+  }
+</style>
+</head>
+<body>
+
+<!-- 階段 1：講解 + 例子 -->
+<div id="stage1">
+  <div id="granny">👵</div>
+
+  <div id="granny-speech">
+    我會問你兩樣嘢有咩相似，<br>
+    你講返個答案畀我聽。
+  </div>
+
+  <div id="example-box">
+    <div class="label">📖 例子：</div>
+    <div class="q">菜刀同砧板有咩相似？</div>
+    <div class="a">廚房工具</div>
+  </div>
+
+  <button id="start-btn">我知道啦！</button>
+</div>
+
+<!-- 階段 2：2 個計分題 -->
+<div id="stage2">
+  <div id="progress">
+    <div class="step-dot active" id="dot-1">1</div>
+    <div class="step-dot" id="dot-2">2</div>
+  </div>
+
+  <div id="read-area">
+    <div id="read-label">🔊 阿婆問你：</div>
+    <button id="read-btn">🔊 播放問題</button>
+  </div>
+
+  <div id="record-area">
+    <div id="record-label">🎤 你答：</div>
+    <div id="recognized-text" class="empty">（撳「播放問題」先）</div>
+    <div id="record-controls">
+      <button class="mic-btn" id="mic-btn" disabled>🎤 開始錄音</button>
+      <button class="mic-btn retry" id="retry-btn" style="display:none;">🔄 重試</button>
+    </div>
+  </div>
+
+  <div id="footer">
+    <button class="btn" id="submit-btn" disabled>✅ 提交並下一題</button>
+  </div>
+</div>
+
+<div id="done-panel">
+  <div id="done-card">
+    <h2>🎉 完成啦！</h2>
+    <p>請向下 scroll 撳「➡️ 去下一關」</p>
+  </div>
+</div>
+
+<script>
+// ═══════════════════════════════════════════
+// 2 個計分題（練習題已經喺階段 1）
+// ═══════════════════════════════════════════
+const QUESTIONS = [
+  {
+    display: "鹽同糖",
+    speak: "鹽同糖有咩相似？",
+  },
+  {
+    display: "魚同蝦",
+    speak: "魚同蝦有咩相似？",
+  },
+];
+
+let currentIdx = 0;
+let answers = ["", ""];
+
+document.getElementById("start-btn").addEventListener("click", () => {
+  document.getElementById("stage1").style.display = "none";
+  document.getElementById("stage2").classList.add("show");
+  updateUI();
+});
+
+function updateUI() {
+  for (let i = 0; i < 2; i++) {
+    const dot = document.getElementById(`dot-${i + 1}`);
+    dot.classList.toggle("active", currentIdx === i);
+    dot.classList.toggle("done", currentIdx > i);
+  }
+
+  const readBtn = document.getElementById("read-btn");
+  readBtn.disabled = false;
+  readBtn.textContent = "🔊 播放問題";
+  readBtn.classList.remove("playing");
+
+  const micBtn = document.getElementById("mic-btn");
+  micBtn.disabled = true;
+  micBtn.textContent = "🎤 開始錄音";
+  micBtn.classList.remove("recording");
+
+  document.getElementById("retry-btn").style.display = "none";
+
+  const submitBtn = document.getElementById("submit-btn");
+  submitBtn.disabled = true;
+  submitBtn.textContent = currentIdx < 1 ? "✅ 提交並下一題" : "✅ 提交並完成";
+
+  const recText = document.getElementById("recognized-text");
+  recText.textContent = "（撳「播放問題」先）";
+  recText.classList.add("empty");
+}
+
+// ═══════════════════════════════════════════
+// AI 讀問題
+// ═══════════════════════════════════════════
+document.getElementById("read-btn").addEventListener("click", () => {
+  const q = QUESTIONS[currentIdx];
+  const readBtn = document.getElementById("read-btn");
+  const micBtn = document.getElementById("mic-btn");
+
+  readBtn.disabled = true;
+  readBtn.textContent = "🔊 播放中...";
+  readBtn.classList.add("playing");
+
+  window.speechSynthesis.cancel();
+
+  const utterance = new SpeechSynthesisUtterance(q.speak);
+  utterance.lang = "zh-HK";
+  utterance.rate = 0.55;
+  utterance.pitch = 1.0;
+  utterance.volume = 1.0;
+
+  const voices = window.speechSynthesis.getVoices();
+  const hkVoice = voices.find(v =>
+    v.lang === "zh-HK" ||
+    v.lang === "yue-HK" ||
+    v.lang.startsWith("zh-HK") ||
+    v.name.toLowerCase().includes("hong kong") ||
+    v.name.includes("粵語") ||
+    v.name.toLowerCase().includes("cantonese")
+  );
+  if (hkVoice) utterance.voice = hkVoice;
+
+  utterance.onend = () => {
+    readBtn.textContent = "🔊 再播一次";
+    readBtn.classList.remove("playing");
+    readBtn.disabled = false;
+
+    micBtn.disabled = false;
+    micBtn.textContent = "🎤 開始錄音";
+
+    const recText = document.getElementById("recognized-text");
+    recText.textContent = "（撳「開始錄音」答問題）";
+    recText.classList.add("empty");
+  };
+
+  window.speechSynthesis.speak(utterance);
+});
+
+// ═══════════════════════════════════════════
+// 錄音
+// ═══════════════════════════════════════════
+let recognition = null;
+let isRecording = false;
+
+function initRecognition() {
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if (!SR) {
+    alert("你嘅瀏覽器唔支援語音辨識。請用 Chrome、Edge 或 Safari。");
+    return null;
+  }
+
+  const rec = new SR();
+  rec.lang = "zh-HK";
+  rec.continuous = true;
+  rec.interimResults = true;
+
+  rec.onresult = (event) => {
+    let finalText = "";
+    let interimText = "";
+    for (let i = event.resultIndex; i < event.results.length; i++) {
+      const t = event.results[i][0].transcript;
+      if (event.results[i].isFinal) finalText += t;
+      else interimText += t;
+    }
+    const displayText = finalText || interimText;
+    if (displayText) {
+      const recText = document.getElementById("recognized-text");
+      recText.textContent = displayText;
+      recText.classList.remove("empty");
+    }
+  };
+
+  rec.onerror = (e) => {
+    console.error("語音辨識錯誤：", e.error);
+    if (e.error === "not-allowed") {
+      alert("需要麥克風權限。請喺瀏覽器設定允許。");
+    }
+  };
+
+  rec.onend = () => {
+    if (isRecording) {
+      try { rec.start(); } catch (e) {}
+    }
+  };
+
+  return rec;
+}
+
+document.getElementById("mic-btn").addEventListener("click", () => {
+  const micBtn = document.getElementById("mic-btn");
+  const retryBtn = document.getElementById("retry-btn");
+  const submitBtn = document.getElementById("submit-btn");
+  const recText = document.getElementById("recognized-text");
+
+  if (!isRecording) {
+    if (!recognition) {
+      recognition = initRecognition();
+      if (!recognition) return;
+    }
+
+    try {
+      recognition.start();
+      isRecording = true;
+      micBtn.textContent = "⏹️ 停止錄音";
+      micBtn.classList.add("recording");
+      recText.textContent = "🎤 錄音中...";
+      recText.classList.remove("empty");
+    } catch (e) { console.error(e); }
+  } else {
+    try { recognition.stop(); } catch (e) {}
+    isRecording = false;
+    micBtn.textContent = "🎤 再錄一次";
+    micBtn.classList.remove("recording");
+
+    answers[currentIdx] = recText.textContent;
+    retryBtn.style.display = "inline-block";
+    submitBtn.disabled = false;
+  }
+});
+
+document.getElementById("retry-btn").addEventListener("click", () => {
+  const micBtn = document.getElementById("mic-btn");
+  const retryBtn = document.getElementById("retry-btn");
+  const submitBtn = document.getElementById("submit-btn");
+  const recText = document.getElementById("recognized-text");
+
+  if (isRecording) {
+    try { recognition.stop(); } catch (e) {}
+    isRecording = false;
+  }
+
+  answers[currentIdx] = "";
+  micBtn.textContent = "🎤 開始錄音";
+  micBtn.classList.remove("recording");
+  micBtn.disabled = false;
+
+  recText.textContent = "（撳「開始錄音」再答一次）";
+  recText.classList.add("empty");
+
+  retryBtn.style.display = "none";
+  submitBtn.disabled = true;
+});
+
+document.getElementById("submit-btn").addEventListener("click", () => {
+  if (isRecording) {
+    try { recognition.stop(); } catch (e) {}
+    isRecording = false;
+  }
+
+  if (currentIdx < 1) {
+    currentIdx++;
+    updateUI();
+  } else {
+    finishGame();
+  }
+});
+
+function finishGame() {
+  document.getElementById("done-panel").classList.add("show");
+
+  const result = {
+    game_id: "game6",
+    completed: true,
+    questions: QUESTIONS.map(q => q.display),
+    player_answers: answers,
+  };
+  console.log("=== 遊戲結果 ===");
+  console.log(JSON.stringify(result, null, 2));
+}
+
+if (typeof speechSynthesis !== "undefined") {
+  speechSynthesis.onvoiceschanged = () => speechSynthesis.getVoices();
+}
+</script>
+</body>
+</html>
