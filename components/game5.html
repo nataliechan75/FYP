@@ -1,0 +1,553 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+<head>
+<meta charset="UTF-8">
+<title>講菜名</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: "Noto Sans TC", "PingFang HK", sans-serif;
+    background: #F5E6C8;
+    color: #2B1A08;
+    overflow: hidden;
+    width: 100vw;
+    height: 100vh;
+    font-size: 24px;
+  }
+
+  /* ═══════════════════════════════════════════
+     階段 1：阿婆講解
+     ═══════════════════════════════════════════ */
+  #stage1 {
+    display: flex;
+    flex-direction: column;
+    width: 100vw;
+    height: 100vh;
+    padding: 32px;
+    gap: 24px;
+    justify-content: center;
+    align-items: center;
+  }
+
+  #granny {
+    font-size: 140px;
+    animation: bounce 2s ease-in-out infinite;
+    filter: drop-shadow(0 10px 20px rgba(90,21,21,0.3));
+  }
+
+  @keyframes bounce {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-15px); }
+  }
+
+  #granny-speech {
+    background: linear-gradient(180deg, #FFF8E7, #E8D4A8);
+    border: 5px solid #7A1F1F;
+    border-radius: 24px;
+    padding: 32px 48px;
+    max-width: 700px;
+    text-align: center;
+    font-size: 32px;
+    font-weight: 700;
+    color: #7A1F1F;
+    line-height: 1.6;
+    position: relative;
+    box-shadow: 0 10px 30px rgba(90,21,21,0.3);
+  }
+
+  #granny-speech::before {
+    content: "";
+    position: absolute;
+    top: -25px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 0; height: 0;
+    border-left: 20px solid transparent;
+    border-right: 20px solid transparent;
+    border-bottom: 25px solid #7A1F1F;
+  }
+
+  #granny-speech::after {
+    content: "";
+    position: absolute;
+    top: -18px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 0; height: 0;
+    border-left: 15px solid transparent;
+    border-right: 15px solid transparent;
+    border-bottom: 20px solid #FFF8E7;
+  }
+
+  #start-btn {
+    font-family: inherit;
+    font-size: 32px;
+    font-weight: 900;
+    padding: 24px 60px;
+    border: 5px solid #5A1515;
+    border-radius: 16px;
+    background: linear-gradient(180deg, #F0C952 0%, #D4A017 100%);
+    color: #2B1A08;
+    cursor: pointer;
+    min-width: 240px;
+    box-shadow: 0 6px 0 #5A1515, 0 10px 20px rgba(90,21,21,0.35);
+  }
+
+  #start-btn:hover { transform: translateY(-4px); }
+
+  /* ═══════════════════════════════════════════
+     階段 2：遊戲
+     ═══════════════════════════════════════════ */
+  #stage2 {
+    display: none;
+    flex-direction: column;
+    width: 100vw;
+    height: 100vh;
+    padding: 20px 32px;
+    gap: 16px;
+  }
+
+  #stage2.show { display: flex !important; }
+
+  /* 計時器 */
+  #timer-area {
+    text-align: center;
+    flex-shrink: 0;
+  }
+
+  #timer {
+    font-size: 72px;
+    font-weight: 900;
+    color: #7A1F1F;
+    line-height: 1;
+    margin-bottom: 8px;
+    font-variant-numeric: tabular-nums;
+  }
+
+  #timer.warning {
+    color: #FF4444;
+    animation: shake 0.5s infinite;
+  }
+
+  @keyframes shake {
+    0%, 100% { transform: translateX(0); }
+    25% { transform: translateX(-3px); }
+    75% { transform: translateX(3px); }
+  }
+
+  #progress-bar {
+    width: 100%;
+    height: 20px;
+    background: #E8D4A8;
+    border: 3px solid #7A1F1F;
+    border-radius: 12px;
+    overflow: hidden;
+  }
+
+  #progress-fill {
+    height: 100%;
+    width: 100%;
+    background: linear-gradient(90deg, #F0C952, #D4A017);
+    transition: width 1s linear;
+  }
+
+  #progress-fill.warning {
+    background: linear-gradient(90deg, #FF4444, #A83232);
+  }
+
+  /* 錄音狀態 */
+  #status {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    font-size: 28px;
+    font-weight: 700;
+    color: #7A1F1F;
+    padding: 12px;
+    flex-shrink: 0;
+  }
+
+  #mic-indicator {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: #A83232;
+    animation: pulse-mic 1s infinite;
+  }
+
+  @keyframes pulse-mic {
+    0%, 100% { transform: scale(1); opacity: 1; }
+    50% { transform: scale(1.2); opacity: 0.6; }
+  }
+
+  /* 即時辨識文字 */
+  #recognized-box {
+    flex: 1;
+    background: #FFFEF8;
+    border: 4px solid #7A1F1F;
+    border-radius: 14px;
+    padding: 20px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    min-height: 0;
+  }
+
+  #recognized-label {
+    font-size: 22px;
+    color: #7A1F1F;
+    font-weight: 700;
+  }
+
+  #recognized-text {
+    font-size: 32px;
+    font-weight: 700;
+    color: #2B1A08;
+    line-height: 1.6;
+    min-height: 100px;
+    word-wrap: break-word;
+  }
+
+  #recognized-text.empty {
+    color: #8A7A58;
+    font-size: 24px;
+    font-weight: 400;
+  }
+
+  /* 計數 */
+  #count-area {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 20px;
+    padding: 16px;
+    background: linear-gradient(180deg, #FFF8E7, #E8D4A8);
+    border: 4px solid #7A1F1F;
+    border-radius: 14px;
+    flex-shrink: 0;
+  }
+
+  #count-label {
+    font-size: 26px;
+    font-weight: 700;
+    color: #7A1F1F;
+  }
+
+  #count-value {
+    font-size: 48px;
+    font-weight: 900;
+    color: #A83232;
+    line-height: 1;
+  }
+
+  /* ═══════════════════════════════════════════
+     完成面板
+     ═══════════════════════════════════════════ */
+  #done-panel {
+    position: fixed;
+    inset: 0;
+    background: rgba(42,24,16,0.9);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 999999;
+    padding: 24px;
+  }
+
+  #done-panel.show { display: flex !important; }
+
+  #done-card {
+    background: linear-gradient(180deg, #F5E6C8, #E8D4A8);
+    border: 6px solid #7A1F1F;
+    border-radius: 24px;
+    padding: 48px 56px;
+    max-width: 640px;
+    text-align: center;
+    box-shadow: 0 0 0 8px #D4A017, 0 30px 80px rgba(0,0,0,0.6);
+  }
+
+  #done-card h2 {
+    font-size: 48px;
+    color: #7A1F1F;
+    margin-bottom: 24px;
+  }
+
+  #done-card .final-count {
+    font-size: 96px;
+    font-weight: 900;
+    color: #A83232;
+    line-height: 1;
+    margin: 20px 0;
+  }
+
+  #done-card .count-label {
+    font-size: 28px;
+    color: #5A4030;
+    margin-bottom: 24px;
+  }
+
+  #done-card p {
+    font-size: 26px;
+    color: #5A4030;
+    line-height: 1.6;
+  }
+</style>
+</head>
+<body>
+
+<!-- 階段 1 -->
+<div id="stage1">
+  <div id="granny">👵</div>
+  <div id="granny-speech">
+    你而家有一分鐘時間，<br>
+    講最多菜名畀我聽，越多越好！<br>
+    <span style="font-size: 24px; opacity: 0.85;">例如：白菜、菜心、菠菜...</span>
+  </div>
+  <button id="start-btn">準備好！開始！</button>
+</div>
+
+<!-- 階段 2 -->
+<div id="stage2">
+  <div id="timer-area">
+    <div id="timer">60</div>
+    <div id="progress-bar">
+      <div id="progress-fill"></div>
+    </div>
+  </div>
+
+  <div id="status">
+    <div id="mic-indicator"></div>
+    <span>🎤 錄音中... 講多啲菜名！</span>
+  </div>
+
+  <div id="recognized-box">
+    <div id="recognized-label">📝 你講咗：</div>
+    <div id="recognized-text" class="empty">（開始講菜名啦...）</div>
+  </div>
+
+  <div id="count-area">
+    <span id="count-label">🥬 已講菜名：</span>
+    <span id="count-value">0</span>
+  </div>
+</div>
+
+<!-- 完成面板 -->
+<div id="done-panel">
+  <div id="done-card">
+    <h2>⏰ 時間到！</h2>
+    <div class="final-count" id="final-count">0</div>
+    <div class="count-label">個菜名</div>
+    <p>請向下 scroll 撳「➡️ 去下一關」</p>
+  </div>
+</div>
+
+<script>
+// ═══════════════════════════════════════════
+// 香港常見菜名詞庫（100+）
+// ═══════════════════════════════════════════
+const VEGETABLES = [
+  // 葉菜類
+  "白菜", "菜心", "菠菜", "芥蘭", "生菜", "唐生菜", "西生菜",
+  "通菜", "莧菜", "芹菜", "韭菜", "黃芽白", "椰菜", "椰菜花",
+  "西蘭花", "紹菜", "小棠菜", "白菜仔", "芥菜", "枸杞",
+  "茼蒿", "豆苗", "紫背天葵", "番薯葉", "潺菜", "西洋菜",
+  // 瓜類
+  "冬瓜", "南瓜", "節瓜", "絲瓜", "黃瓜", "青瓜", "苦瓜",
+  "涼瓜", "茄子", "番茄", "矮瓜", "木瓜", "合掌瓜",
+  "佛手瓜", "葫蘆瓜",
+  // 根莖類
+  "薯仔", "紅蘿蔔", "白蘿蔔", "甘筍", "蓮藕", "山藥", "芋頭",
+  "番薯", "淮山", "薑", "沙葛", "慈菇", "荸薺", "牛蒡",
+  // 豆類
+  "豆芽", "芽菜", "豆腐", "豆角", "荷蘭豆", "蠶豆", "蜜豆",
+  "青豆", "紅豆", "綠豆", "眉豆", "花生",
+  // 蔥蒜類
+  "蔥", "青蔥", "洋蔥", "蒜", "蒜頭", "大蒜", "蒜苗", "韭菜花",
+  // 菇菌類
+  "冬菇", "蘑菇", "金菇", "鮮菇", "草菇", "木耳", "雲耳",
+  "雪耳", "靈芝菇", "秀珍菇", "鮑魚菇", "雞髀菇",
+  // 其他
+  "粟米", "玉米", "青椒", "紅椒", "黃椒", "燈籠椒", "指天椒",
+  "辣椒", "秋葵", "蘆筍", "竹筍", "茭白", "紫菜", "海帶",
+];
+
+// ═══════════════════════════════════════════
+// 狀態
+// ═══════════════════════════════════════════
+let allText = "";             // 累積所有辨識文字
+let foundVegetables = new Set();  // 已搵到嘅菜名（去重複）
+let timeLeft = 60;
+let timerInterval = null;
+let recognition = null;
+let isRecording = false;
+
+// ═══════════════════════════════════════════
+// 階段切換
+// ═══════════════════════════════════════════
+document.getElementById("start-btn").addEventListener("click", () => {
+  document.getElementById("stage1").style.display = "none";
+  document.getElementById("stage2").classList.add("show");
+  startGame();
+});
+
+// ═══════════════════════════════════════════
+// 開始遊戲
+// ═══════════════════════════════════════════
+function startGame() {
+  allText = "";
+  foundVegetables = new Set();
+  timeLeft = 60;
+  updateTimerUI();
+  updateCountUI();
+
+  // 啟動錄音
+  startRecognition();
+
+  // 啟動倒數
+  timerInterval = setInterval(() => {
+    timeLeft--;
+    updateTimerUI();
+    if (timeLeft <= 0) {
+      endGame();
+    }
+  }, 1000);
+}
+
+// ═══════════════════════════════════════════
+// 計時器 UI
+// ═══════════════════════════════════════════
+function updateTimerUI() {
+  const timer = document.getElementById("timer");
+  const fill = document.getElementById("progress-fill");
+  timer.textContent = timeLeft;
+  fill.style.width = (timeLeft / 60 * 100) + "%";
+
+  if (timeLeft <= 10) {
+    timer.classList.add("warning");
+    fill.classList.add("warning");
+  }
+}
+
+// ═══════════════════════════════════════════
+// 計數 UI
+// ═══════════════════════════════════════════
+function updateCountUI() {
+  document.getElementById("count-value").textContent = foundVegetables.size;
+}
+
+// ═══════════════════════════════════════════
+// 語音辨識
+// ═══════════════════════════════════════════
+function startRecognition() {
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if (!SR) {
+    alert("你嘅瀏覽器唔支援語音辨識。請用 Chrome、Edge 或 Safari。");
+    return;
+  }
+
+  recognition = new SR();
+  recognition.lang = "zh-HK";
+  recognition.continuous = true;
+  recognition.interimResults = true;
+
+  recognition.onresult = (event) => {
+    let finalText = "";
+    let interimText = "";
+
+    for (let i = event.resultIndex; i < event.results.length; i++) {
+      const t = event.results[i][0].transcript;
+      if (event.results[i].isFinal) {
+        finalText += t;
+      } else {
+        interimText += t;
+      }
+    }
+
+    // 更新顯示
+    const displayText = allText + finalText + interimText;
+    const recText = document.getElementById("recognized-text");
+    if (displayText) {
+      recText.textContent = displayText;
+      recText.classList.remove("empty");
+    }
+
+    // 有新 final result → 加入 allText + 比對
+    if (finalText) {
+      allText += finalText;
+      matchVegetables(allText);
+    }
+  };
+
+  recognition.onerror = (e) => {
+    console.error("語音辨識錯誤：", e.error);
+    if (e.error === "not-allowed") {
+      alert("需要麥克風權限。請喺瀏覽器設定允許。");
+    }
+  };
+
+  recognition.onend = () => {
+    if (isRecording && timeLeft > 0) {
+      try { recognition.start(); } catch (e) {}
+    }
+  };
+
+  try {
+    recognition.start();
+    isRecording = true;
+  } catch (e) {
+    console.error(e);
+  }
+}
+
+// ═══════════════════════════════════════════
+// 詞庫比對
+// ═══════════════════════════════════════════
+function matchVegetables(text) {
+  // 由長到短排序，避免「生菜」比「菜」先 match
+  const sorted = [...VEGETABLES].sort((a, b) => b.length - a.length);
+
+  for (const veg of sorted) {
+    if (text.includes(veg)) {
+      foundVegetables.add(veg);
+    }
+  }
+
+  updateCountUI();
+}
+
+// ═══════════════════════════════════════════
+// 結束遊戲
+// ═══════════════════════════════════════════
+function endGame() {
+  clearInterval(timerInterval);
+
+  // 停止錄音
+  if (isRecording && recognition) {
+    try { recognition.stop(); } catch (e) {}
+    isRecording = false;
+  }
+
+  // 最後一次比對（避免漏）
+  matchVegetables(allText);
+
+  // 顯示完成面板
+  document.getElementById("final-count").textContent = foundVegetables.size;
+  document.getElementById("done-panel").classList.add("show");
+
+  // 記錄結果
+  const result = {
+    game_id: "game5",
+    completed: true,
+    total_vegetables: foundVegetables.size,
+    vegetables_found: [...foundVegetables],
+    full_text: allText,
+  };
+  console.log("=== 遊戲結果 ===");
+  console.log(JSON.stringify(result, null, 2));
+}
+</script>
+</body>
+</html>
