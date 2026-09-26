@@ -1,6 +1,6 @@
 import streamlit as st
 
-GAME_ORDER = ["intro", "connect_coins", "game2", "game3", "game4", "game5", "end"]
+GAME_ORDER = ["intro", "connect_coins", "game2", "game3", "game4", "game5", "game6", "end"]
 
 CORRECT_SEQUENCE = ["10¢", "$1", "20¢", "$2", "50¢", "$5", "$10"]
 
