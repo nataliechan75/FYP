@@ -22,7 +22,7 @@ def render():
 
     st.components.v1.html(
         html_content,
-        height=600,
+        height=500,
         scrolling=False,
     )
 
