@@ -28,17 +28,23 @@ def render():
 
     components.html(html_content, height=500, scrolling=False)
 
-    # ★ CSS 隱藏 text_input（用 opacity，保留 render）★
+    # ★ CSS 隱藏：保留 render ★
     st.markdown(
         """
         <style>
         div[data-testid="stTextInput"] {
-            position: absolute !important;
-            left: -9999px !important;
-            width: 1px !important;
             height: 1px !important;
-            opacity: 0 !important;
-            pointer-events: none !important;
+            min-height: 1px !important;
+            max-height: 1px !important;
+            overflow: hidden !important;
+            opacity: 0.01 !important;
+            margin: 0 !important;
+            padding: 0 !important;
+        }
+        div[data-testid="stTextInput"] input {
+            height: 1px !important;
+            min-height: 1px !important;
+            opacity: 0.01 !important;
         }
         </style>
         """,
@@ -48,7 +54,7 @@ def render():
     result_json = st.text_input(
         "result",
         key="game1_result",
-        label_visibility="collapsed",
+        label_visibility="hidden",
     )
 
     col1, col2, col3 = st.columns([1, 2, 1])
