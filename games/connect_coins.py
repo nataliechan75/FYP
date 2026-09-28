@@ -28,21 +28,7 @@ def render():
 
     components.html(html_content, height=500, scrolling=False)
 
-    # ★ 用 margin-left 移出畫面（保留 render）★
-    st.markdown(
-        """
-        <style>
-        div[data-testid="stTextInput"] {
-            margin-left: -9999px !important;
-            height: 60px !important;
-            min-height: 60px !important;
-            overflow: hidden !important;
-        }
-        </style>
-        """,
-        unsafe_allow_html=True,
-    )
-
+    # ★ text_input 公開顯示 ★
     result_json = st.text_input(
         "result",
         key="game1_result",
