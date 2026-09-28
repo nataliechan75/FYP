@@ -235,11 +235,11 @@ const CORRECT_SEQUENCE = ["1d", "10b", "2d", "20b", "5d", "50b", "10d", "100b"];
 const TARGET_CONNECTIONS = ITEMS.length - 1;
 
 // ═══════════════════════════════════════════
-// 固定尺寸（唔分手機 / 桌面）
+// 固定尺寸（縮細咗）
 // ═══════════════════════════════════════════
-const COIN_SIZE = 80;
-const BILL_W = 110;
-const BILL_H = 70;
+const COIN_SIZE = 65;
+const BILL_W = 90;
+const BILL_H = 58;
 const FOOTER_H = 140;
 
 function getSizes() {
@@ -357,7 +357,7 @@ function generateLayout(W, H) {
       };
     });
 
-    if (sequenceIsValid(candidate, CORRECT_SEQUENCE)) return candidate;
+    if (sequenceHasNoCrossing(candidate, CORRECT_SEQUENCE)) return candidate;
   }
 
   // Fallback: 3x3 grid
@@ -385,7 +385,8 @@ function generateLayout(W, H) {
   });
 }
 
-function sequenceIsValid(items, seq) {
+// ★ 只檢查線與線交叉（唔檢查穿過硬幣）★
+function sequenceHasNoCrossing(items, seq) {
   const lines = [];
   for (let i = 0; i < seq.length - 1; i++) {
     const a = items.find(c => c.id === seq[i]);
@@ -394,8 +395,6 @@ function sequenceIsValid(items, seq) {
     lines.push({
       a: itemCenter(a),
       b: itemCenter(b),
-      aId: a.id,
-      bId: b.id,
     });
   }
 
@@ -405,12 +404,6 @@ function sequenceIsValid(items, seq) {
       if (segmentsIntersect(lines[i].a, lines[i].b, lines[j].a, lines[j].b)) {
         return false;
       }
-    }
-  }
-
-  for (const line of lines) {
-    if (lineIntersectsItems(line.a, line.b, items, [line.aId, line.bId])) {
-      return false;
     }
   }
 
@@ -541,18 +534,9 @@ function onPointerMove(e) {
 
   state.items.forEach(item => {
     item.el.classList.remove("highlight");
-    item.el.classList.remove("crossing");
     if (!item.connectedTo && item !== state.dragging &&
         isInsideItem(e.clientX, e.clientY, item)) {
-      const a = itemCenter(state.dragging);
-      const b = itemCenter(item);
-      const willCross = lineIntersectsItems(a, b, state.items, [state.dragging.id, item.id]);
-
-      if (willCross) {
-        item.el.classList.add("crossing");
-      } else {
-        item.el.classList.add("highlight");
-      }
+      item.el.classList.add("highlight");
     }
   });
 }
@@ -562,10 +546,7 @@ function onPointerUp(e) {
   if (!from) return;
 
   from.el.classList.remove("dragging");
-  state.items.forEach(item => {
-    item.el.classList.remove("highlight");
-    item.el.classList.remove("crossing");
-  });
+  state.items.forEach(item => item.el.classList.remove("highlight"));
 
   const ghost = document.getElementById("ghost");
   if (ghost) ghost.remove();
@@ -574,15 +555,7 @@ function onPointerUp(e) {
     !item.connectedTo && item !== from && isInsideItem(e.clientX, e.clientY, item)
   );
 
-  if (target) {
-    const a = itemCenter(from);
-    const b = itemCenter(target);
-    const willCross = lineIntersectsItems(a, b, state.items, [from.id, target.id]);
-
-    if (!willCross) {
-      makeConnection(from, target, state.dragStart);
-    }
-  }
+  if (target) makeConnection(from, target, state.dragStart);
 
   state.dragging = null;
   state.dragStart = null;
