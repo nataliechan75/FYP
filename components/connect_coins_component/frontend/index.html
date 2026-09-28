@@ -96,7 +96,7 @@
   }
 
   #hint {
-    font-size: 18px;
+    font-size: 20px;
     font-weight: 700;
     color: #7A1F1F;
     width: 100%;
@@ -113,7 +113,7 @@
 
   .btn {
     font-family: inherit;
-    font-size: 18px;
+    font-size: 15px;
     font-weight: 900;
     padding: 12px 20px;
     border: 3px solid #5A1515;
@@ -163,8 +163,8 @@
     background: linear-gradient(180deg, #F5E6C8, #E8D4A8);
     border: 6px solid #7A1F1F;
     border-radius: 24px;
-    padding: 40px 48px;
-    max-width: 500px;
+    padding: 32px 40px;
+    max-width: 450px;
     text-align: center;
     box-shadow: 0 0 0 8px #D4A017, 0 30px 80px rgba(0,0,0,0.6);
     animation: popIn 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
@@ -176,13 +176,13 @@
   }
 
   #finish-card h2 {
-    font-size: 42px;
+    font-size: 32px;
     color: #7A1F1F;
-    margin-bottom: 16px;
+    margin-bottom: 12px;
   }
 
   #finish-card p {
-    font-size: 24px;
+    font-size: 20px;
     color: #5A4030;
     line-height: 1.6;
   }
@@ -236,7 +236,6 @@ const ITEMS = [
 const CORRECT_SEQUENCE = ["1d", "10b", "2d", "20b", "5d", "50b", "10d", "100b"];
 const TARGET_CONNECTIONS = ITEMS.length - 1;
 
-// ★ 縮細 + 加多嘗試次數 ★
 const COIN_SIZE = 55;
 const BILL_W = 78;
 const BILL_H = 50;
@@ -292,7 +291,6 @@ function isInsideItem(px, py, item) {
 }
 
 function generateLayout(W, H) {
-  // ★ 2000 次嘗試（之前 500）★
   for (let attempt = 0; attempt < 2000; attempt++) {
     const placed = [];
     let ok = true;
@@ -301,7 +299,6 @@ function generateLayout(W, H) {
       const item = ITEMS[i];
       const size = getItemSize(item);
       let x, y, tries = 0, found = false;
-      // ★ 減少額外距離（20 → 10）★
       const minDist = Math.max(size.w, size.h) + 10;
 
       while (tries < 300) {
