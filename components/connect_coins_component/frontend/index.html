@@ -73,6 +73,11 @@
     transform: scale(1.1);
   }
 
+  .coin.crossing {
+    filter: drop-shadow(0 0 16px rgba(200, 0, 0, 1)) !important;
+    transform: scale(1.1);
+  }
+
   .coin svg {
     width: 100%; height: 100%;
     pointer-events: none;
@@ -237,6 +242,10 @@ function injectValueIntoStreamlitWidget(text) {
     console.log("❌ 注入失敗：", e);
   }
 }
+
+// ═══════════════════════════════════════════
+// 8 個 item
+// ═══════════════════════════════════════════
 const ITEMS = [
   { id: "1d",   type: "coin",  text: "$1",   value: 1,
     c1: "#F0D580", c2: "#B08F2E", c3: "#8A6F1E" },
@@ -311,6 +320,27 @@ function isInsideItem(px, py, item) {
   const c = itemCenter(item);
   const r = Math.max(item.w, item.h) / 2 + 15;
   return Math.hypot(px - c.x, py - c.y) <= r;
+}
+
+// ★ 檢查新線會唔會同現有線交叉 ★
+function willCrossExisting(from, to) {
+  const a = itemCenter(from);
+  const b = itemCenter(to);
+
+  for (const conn of state.connections) {
+    // 跳過共享端點
+    if (conn.from === from.id || conn.to === from.id) continue;
+    if (conn.from === to.id || conn.to === to.id) continue;
+
+    const c = state.items.find(x => x.id === conn.from);
+    const d = state.items.find(x => x.id === conn.to);
+    if (!c || !d) continue;
+
+    if (segmentsIntersect(a, b, itemCenter(c), itemCenter(d))) {
+      return true;
+    }
+  }
+  return false;
 }
 
 function generateLayout(W, H) {
@@ -462,7 +492,6 @@ function billSvg(item) {
     </svg>
   `;
 }
-
 function init() {
   SIZES = getSizes();
 
@@ -532,9 +561,16 @@ function onPointerMove(e) {
 
   state.items.forEach(item => {
     item.el.classList.remove("highlight");
+    item.el.classList.remove("crossing");
+
     if (!item.connectedTo && item !== state.dragging &&
         isInsideItem(e.clientX, e.clientY, item)) {
-      item.el.classList.add("highlight");
+      // ★ 檢查會唔會交叉 ★
+      if (willCrossExisting(state.dragging, item)) {
+        item.el.classList.add("crossing");  // 紅色 = 唔畀連
+      } else {
+        item.el.classList.add("highlight");  // 金色 = 可以連
+      }
     }
   });
 }
@@ -544,7 +580,10 @@ function onPointerUp(e) {
   if (!from) return;
 
   from.el.classList.remove("dragging");
-  state.items.forEach(item => item.el.classList.remove("highlight"));
+  state.items.forEach(item => {
+    item.el.classList.remove("highlight");
+    item.el.classList.remove("crossing");
+  });
 
   const ghost = document.getElementById("ghost");
   if (ghost) ghost.remove();
@@ -553,7 +592,13 @@ function onPointerUp(e) {
     !item.connectedTo && item !== from && isInsideItem(e.clientX, e.clientY, item)
   );
 
-  if (target) makeConnection(from, target, state.dragStart);
+  if (target) {
+    // ★ 檢查會唔會交叉 ★
+    if (!willCrossExisting(from, target)) {
+      makeConnection(from, target, state.dragStart);
+    }
+    // 如果會交叉 → 唔連
+  }
 
   state.dragging = null;
   state.dragStart = null;
@@ -605,24 +650,24 @@ function makeConnection(from, to, startTime) {
   if (state.connections.length === TARGET_CONNECTIONS) {
     document.getElementById("finish-popup").classList.add("show");
     document.getElementById("hint").textContent = "✅ 完成啦！請向下 scroll 撳「➡️ 去下一關」";
+
+    // ★ 注入數據（喺 if 入面，只執行一次）★
+    const seq = state.connections.map(c => c.from);
+    seq.push(state.connections[state.connections.length - 1].to);
+
+    const isCorrect = JSON.stringify(seq) === JSON.stringify(CORRECT_SEQUENCE);
+
+    const resultData = {
+      is_correct: isCorrect,
+      sequence: seq,
+      undo_count: state.undoCount,
+    };
+
+    console.log("=== 遊戲結果 ===");
+    console.log(JSON.stringify(resultData, null, 2));
+
+    injectValueIntoStreamlitWidget(JSON.stringify(resultData));
   }
-   // ★ 注入數據落 Streamlit ★
-  const seq = state.connections.map(c => c.from);
-  seq.push(state.connections[state.connections.length - 1].to);
-
-  const isCorrect = JSON.stringify(seq) === JSON.stringify(CORRECT_SEQUENCE);
-
-  const resultData = {
-    is_correct: isCorrect,
-    sequence: seq,
-    undo_count: state.undoCount,
-  };
-
-  console.log("=== 遊戲結果 ===");
-  console.log(JSON.stringify(resultData, null, 2));
-
-  injectValueIntoStreamlitWidget(JSON.stringify(resultData));
-
 }
 
 function undo() {
