@@ -246,7 +246,7 @@ const ITEMS = [
 ];
 
 const CORRECT_SEQUENCE = ["1d", "10b", "2d", "20b", "5d", "50b", "10d", "100b"];
-const TARGET_CONNECTIONS = ITEMS.length - 1;
+const TARGET_S = ITEMS.length - 1;
 
 function getSizes() {
   const w = window.innerWidth;
@@ -650,8 +650,9 @@ function makeConnection(from, to, startTime) {
   if (state.connections.length === TARGET_CONNECTIONS) {
   document.getElementById("finish-popup").classList.add("show");
   document.getElementById("hint").textContent = "✅ 完成啦！請向下 scroll 撳「➡️ 去下一關」";
+  }
 }
-
+ 
 function undo() {
   if (state.connections.length === 0) return;
   state.connections.pop();
