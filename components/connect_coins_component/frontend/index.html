@@ -220,11 +220,17 @@
 function injectValueIntoStreamlitWidget(text) {
   try {
     const doc = window.parent.document;
-    const inputs = doc.querySelectorAll('input[type="text"], textarea');
-    if (inputs.length > 0) {
-      const target = inputs[0];
+
+    // ★ 用更精確嘅 selector ★
+    const target =
+      doc.querySelector('div[data-testid="stTextInput"] input') ||
+      doc.querySelector('input[type="text"]') ||
+      doc.querySelector('textarea');
+
+    if (target) {
       const setter = Object.getOwnPropertyDescriptor(
-        window.HTMLInputElement.prototype, "value"
+        window.HTMLInputElement.prototype,
+        "value"
       ).set;
       setter.call(target, text);
       target.dispatchEvent(new Event("input", { bubbles: true }));
@@ -237,7 +243,7 @@ function injectValueIntoStreamlitWidget(text) {
     console.log("❌ 注入失敗：", e);
   }
 }
-const ITEMS = [
+ const ITEMS = [
   { id: "1d",   type: "coin",  text: "$1",   value: 1,
     c1: "#F0D580", c2: "#B08F2E", c3: "#8A6F1E" },
   { id: "10b",  type: "bill",  text: "$10",  value: 10,
