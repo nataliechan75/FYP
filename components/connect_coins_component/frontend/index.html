@@ -12,15 +12,17 @@
     background: #2A1810;
     color: #2B1A08;
     overflow: hidden;
-    width: 100vw;
-    height: 100vh;
+    width: 100%;
+    height: 100%;
+    margin: 0;
+    padding: 0;
     font-size: 16px;
   }
 
   #game-wrap {
     position: relative;
-    width: 100vw;
-    height: 100vh;
+    width: 100%;
+    height: 100%;
     overflow: hidden;
     touch-action: none;
   }
@@ -68,6 +70,11 @@
 
   .coin.highlight {
     filter: drop-shadow(0 0 16px rgba(212, 160, 23, 1));
+    transform: scale(1.1);
+  }
+
+  .coin.crossing {
+    filter: drop-shadow(0 0 16px rgba(200, 0, 0, 1));
     transform: scale(1.1);
   }
 
@@ -180,9 +187,6 @@
 </div>
 
 <script>
-// ═══════════════════════════════════════════
-// 8 個 item
-// ═══════════════════════════════════════════
 const ITEMS = [
   { id: "1d",   type: "coin",  text: "$1",   value: 1,
     c1: "#F0D580", c2: "#B08F2E", c3: "#8A6F1E" },
@@ -205,24 +209,18 @@ const ITEMS = [
 const CORRECT_SEQUENCE = ["1d", "10b", "2d", "20b", "5d", "50b", "10d", "100b"];
 const TARGET_CONNECTIONS = ITEMS.length - 1;
 
-// ═══════════════════════════════════════════
-// 響應式尺寸（手機優化）
-// ═══════════════════════════════════════════
 function getSizes() {
   const w = window.innerWidth;
-
   let coinSize, billW, billH, footerH;
-
   if (w < 400) {
-    coinSize = 50; billW = 65; billH = 42; footerH = 90;
+    coinSize = 55; billW = 78; billH = 50; footerH = 90;
   } else if (w < 600) {
-    coinSize = 60; billW = 80; billH = 50; footerH = 100;
+    coinSize = 65; billW = 92; billH = 60; footerH = 100;
   } else if (w < 900) {
-    coinSize = 80; billW = 108; billH = 68; footerH = 115;
+    coinSize = 80; billW = 110; billH = 70; footerH = 115;
   } else {
-    coinSize = 100; billW = 135; billH = 85; footerH = 130;
+    coinSize = 95; billW = 130; billH = 82; footerH = 130;
   }
-
   return { coinSize, billW, billH, footerH };
 }
 
@@ -234,9 +232,6 @@ function getItemSize(item) {
     : { w: SIZES.billW, h: SIZES.billH };
 }
 
-// ═══════════════════════════════════════════
-// 狀態
-// ═══════════════════════════════════════════
 let state = {
   items: [],
   connections: [],
@@ -246,9 +241,6 @@ let state = {
   dragStart: null,
 };
 
-// ═══════════════════════════════════════════
-// 幾何
-// ═══════════════════════════════════════════
 function cross(o, a, b) {
   return (a.x - o.x) * (b.y - o.y) - (a.y - o.y) * (b.x - o.x);
 }
@@ -272,13 +264,33 @@ function isInsideItem(px, py, item) {
   return Math.hypot(px - c.x, py - c.y) <= r;
 }
 
-// ═══════════════════════════════════════════
-// 生成唔交叉排列（手機優化）
-// ═══════════════════════════════════════════
+function pointToSegmentDistance(C, A, B) {
+  const dx = B.x - A.x;
+  const dy = B.y - A.y;
+  const lenSq = dx * dx + dy * dy;
+  if (lenSq === 0) return Math.hypot(C.x - A.x, C.y - A.y);
+  let t = ((C.x - A.x) * dx + (C.y - A.y) * dy) / lenSq;
+  t = Math.max(0, Math.min(1, t));
+  const px = A.x + t * dx;
+  const py = A.y + t * dy;
+  return Math.hypot(C.x - px, C.y - py);
+}
+
+function lineIntersectsItems(A, B, items, excludeIds) {
+  for (const item of items) {
+    if (excludeIds.includes(item.id)) continue;
+    const C = itemCenter(item);
+    const radius = Math.max(item.w, item.h) / 2;
+    const dist = pointToSegmentDistance(C, A, B);
+    if (dist < radius) return true;
+  }
+  return false;
+}
+
 function generateLayout(W, H) {
   const isMobile = window.innerWidth < 600;
 
-  for (let attempt = 0; attempt < 300; attempt++) {
+  for (let attempt = 0; attempt < 500; attempt++) {
     const placed = [];
     let ok = true;
 
@@ -321,10 +333,10 @@ function generateLayout(W, H) {
       };
     });
 
-    if (sequenceHasNoCrossing(candidate, CORRECT_SEQUENCE)) return candidate;
+    if (sequenceIsValid(candidate, CORRECT_SEQUENCE)) return candidate;
   }
 
-  // Fallback：3×3 grid
+  // Fallback: 3x3 grid
   const GRID = [];
   for (let row = 0; row < 3; row++) {
     for (let col = 0; col < 3; col++) {
@@ -349,26 +361,38 @@ function generateLayout(W, H) {
   });
 }
 
-function sequenceHasNoCrossing(items, seq) {
+function sequenceIsValid(items, seq) {
   const lines = [];
   for (let i = 0; i < seq.length - 1; i++) {
     const a = items.find(c => c.id === seq[i]);
     const b = items.find(c => c.id === seq[i + 1]);
     if (!a || !b) return false;
-    lines.push({ a: itemCenter(a), b: itemCenter(b) });
+    lines.push({
+      a: itemCenter(a),
+      b: itemCenter(b),
+      aId: a.id,
+      bId: b.id,
+    });
   }
+
   for (let i = 0; i < lines.length; i++) {
     for (let j = i + 1; j < lines.length; j++) {
       if (j === i + 1) continue;
-      if (segmentsIntersect(lines[i].a, lines[i].b, lines[j].a, lines[j].b)) return false;
+      if (segmentsIntersect(lines[i].a, lines[i].b, lines[j].a, lines[j].b)) {
+        return false;
+      }
     }
   }
+
+  for (const line of lines) {
+    if (lineIntersectsItems(line.a, line.b, items, [line.aId, line.bId])) {
+      return false;
+    }
+  }
+
   return true;
 }
 
-// ═══════════════════════════════════════════
-// 硬幣 SVG
-// ═══════════════════════════════════════════
 function coinSvg(item) {
   const gid = "g-" + item.id + "-" + Math.random().toString(36).slice(2, 6);
   const sid = "s-" + item.id + "-" + Math.random().toString(36).slice(2, 6);
@@ -401,9 +425,6 @@ function coinSvg(item) {
   `;
 }
 
-// ═══════════════════════════════════════════
-// 紙幣 SVG
-// ═══════════════════════════════════════════
 function billSvg(item) {
   const gid = "g-" + item.id + "-" + Math.random().toString(36).slice(2, 6);
   const w = item.w, h = item.h;
@@ -427,19 +448,18 @@ function billSvg(item) {
   `;
 }
 
-// ═══════════════════════════════════════════
-// 初始化
-// ═══════════════════════════════════════════
 function init() {
   SIZES = getSizes();
-  const svg = document.getElementById("canvas");
-  svg.setAttribute("width", window.innerWidth);
-  svg.setAttribute("height", window.innerHeight);
-  svg.setAttribute("viewBox", `0 0 ${window.innerWidth} ${window.innerHeight}`);
 
   const wrap = document.getElementById("game-wrap");
   const W = wrap.clientWidth;
   const H = wrap.clientHeight - SIZES.footerH;
+
+  // ★ 用實際高度設定 SVG ★
+  const svg = document.getElementById("canvas");
+  svg.setAttribute("width", W);
+  svg.setAttribute("height", wrap.clientHeight);
+  svg.setAttribute("viewBox", `0 0 ${W} ${wrap.clientHeight}`);
 
   state.items = generateLayout(W, H);
 
@@ -464,9 +484,6 @@ function init() {
   state.startTime = performance.now();
 }
 
-// ═══════════════════════════════════════════
-// 拖曳
-// ═══════════════════════════════════════════
 function onItemPointerDown(e) {
   e.preventDefault();
   const id = e.currentTarget.dataset.itemId;
@@ -502,9 +519,18 @@ function onPointerMove(e) {
 
   state.items.forEach(item => {
     item.el.classList.remove("highlight");
+    item.el.classList.remove("crossing");
     if (!item.connectedTo && item !== state.dragging &&
         isInsideItem(e.clientX, e.clientY, item)) {
-      item.el.classList.add("highlight");
+      const a = itemCenter(state.dragging);
+      const b = itemCenter(item);
+      const willCross = lineIntersectsItems(a, b, state.items, [state.dragging.id, item.id]);
+
+      if (willCross) {
+        item.el.classList.add("crossing");
+      } else {
+        item.el.classList.add("highlight");
+      }
     }
   });
 }
@@ -514,7 +540,10 @@ function onPointerUp(e) {
   if (!from) return;
 
   from.el.classList.remove("dragging");
-  state.items.forEach(item => item.el.classList.remove("highlight"));
+  state.items.forEach(item => {
+    item.el.classList.remove("highlight");
+    item.el.classList.remove("crossing");
+  });
 
   const ghost = document.getElementById("ghost");
   if (ghost) ghost.remove();
@@ -523,7 +552,15 @@ function onPointerUp(e) {
     !item.connectedTo && item !== from && isInsideItem(e.clientX, e.clientY, item)
   );
 
-  if (target) makeConnection(from, target, state.dragStart);
+  if (target) {
+    const a = itemCenter(from);
+    const b = itemCenter(target);
+    const willCross = lineIntersectsItems(a, b, state.items, [from.id, target.id]);
+
+    if (!willCross) {
+      makeConnection(from, target, state.dragStart);
+    }
+  }
 
   state.dragging = null;
   state.dragStart = null;
@@ -531,9 +568,6 @@ function onPointerUp(e) {
   document.removeEventListener("pointerup", onPointerUp);
 }
 
-// ═══════════════════════════════════════════
-// 連線
-// ═══════════════════════════════════════════
 function makeConnection(from, to, startTime) {
   const layer = document.getElementById("lines-layer");
   const a = itemCenter(from);
@@ -581,9 +615,6 @@ function makeConnection(from, to, startTime) {
   }
 }
 
-// ═══════════════════════════════════════════
-// Undo
-// ═══════════════════════════════════════════
 function undo() {
   if (state.connections.length === 0) return;
   state.connections.pop();
@@ -610,9 +641,6 @@ function undo() {
   }
 }
 
-// ═══════════════════════════════════════════
-// 完成
-// ═══════════════════════════════════════════
 function finishGame() {
   const totalTime = (performance.now() - state.startTime) / 1000;
   const seq = state.connections.length ? [state.connections[0].from] : [];
@@ -631,9 +659,6 @@ function finishGame() {
   console.log(JSON.stringify(result, null, 2));
 }
 
-// ═══════════════════════════════════════════
-// 重新開始
-// ═══════════════════════════════════════════
 function restart() {
   document.querySelectorAll(".coin").forEach(el => el.remove());
   document.getElementById("lines-layer").innerHTML = "";
