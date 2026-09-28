@@ -2,19 +2,19 @@
 <html lang="zh-HK">
 <head>
 <meta charset="UTF-8">
-<script src="https://unpkg.com/streamlit-component-lib@2.0.0/dist/streamlit-component-lib.js"></script>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>街市接線遊戲</title>
 <style>
-  * { box-sizing: border-box; margin: 0; padding: 0; }
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
 
-  body {
+  html, body {
     font-family: "Noto Sans TC", "PingFang HK", "Microsoft JhengHei", sans-serif;
     background: #2A1810;
     color: #2B1A08;
-    font-size: 28px;
     overflow: hidden;
     width: 100vw;
     height: 100vh;
+    font-size: 16px;
   }
 
   #game-wrap {
@@ -22,6 +22,7 @@
     width: 100vw;
     height: 100vh;
     overflow: hidden;
+    touch-action: none;
   }
 
   #bg {
@@ -33,19 +34,7 @@
       radial-gradient(circle at 85% 75%, rgba(212, 160, 23, 0.12) 0%, transparent 50%),
       repeating-linear-gradient(88deg,
         rgba(90, 40, 20, 0.04) 0 2px,
-        transparent 2px 8px,
-        rgba(90, 40, 20, 0.02) 8px 12px,
-        transparent 12px 25px);
-    pointer-events: none;
-  }
-
-  #bg::after {
-    content: "";
-    position: absolute;
-    inset: 0;
-    background: radial-gradient(ellipse at center,
-      transparent 40%,
-      rgba(90, 21, 21, 0.2) 100%);
+        transparent 2px 8px);
     pointer-events: none;
   }
 
@@ -61,99 +50,76 @@
     position: absolute;
     cursor: grab;
     user-select: none;
-    transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1),
-                filter 0.2s ease;
     z-index: 10;
     touch-action: none;
-    filter:
-      drop-shadow(0 6px 10px rgba(60, 30, 10, 0.4))
-      drop-shadow(0 2px 3px rgba(60, 30, 10, 0.25));
-    animation: coinDrop 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) backwards;
-  }
-
-  @keyframes coinDrop {
-    0%   { opacity: 0; transform: scale(0.3) translateY(-40px); }
-    100% { opacity: 1; transform: scale(1) translateY(0); }
-  }
-
-  .coin:hover {
-    transform: scale(1.10) rotate(-2deg);
+    transition: transform 0.15s ease;
+    filter: drop-shadow(0 3px 5px rgba(60, 30, 10, 0.4));
   }
 
   .coin.dragging {
-    cursor: grabbing;
-    transform: scale(1.18) rotate(3deg);
     z-index: 100;
+    transform: scale(1.15);
   }
 
   .coin.connected {
-    filter:
-      drop-shadow(0 0 22px rgba(212, 160, 23, 0.95))
-      drop-shadow(0 0 8px rgba(240, 201, 82, 0.8))
-      drop-shadow(0 6px 10px rgba(60, 30, 10, 0.4));
+    filter: drop-shadow(0 0 12px rgba(212, 160, 23, 0.95))
+            drop-shadow(0 3px 5px rgba(60, 30, 10, 0.4));
   }
 
   .coin.highlight {
-    filter:
-      drop-shadow(0 0 26px rgba(212, 160, 23, 1))
-      drop-shadow(0 0 12px rgba(240, 201, 82, 0.9));
-    transform: scale(1.15) rotate(0deg);
+    filter: drop-shadow(0 0 16px rgba(212, 160, 23, 1));
+    transform: scale(1.1);
   }
 
   .coin svg {
     width: 100%; height: 100%;
     pointer-events: none;
+    display: block;
   }
 
   #footer {
     position: fixed;
     bottom: 0; left: 0; right: 0;
-    padding: 22px 40px;
+    padding: 10px 14px;
     background: linear-gradient(180deg,
       rgba(245, 230, 200, 0.94) 0%,
       rgba(232, 212, 168, 0.98) 100%);
-    border-top: 5px solid #7A1F1F;
-    box-shadow:
-      0 -2px 0 #D4A017,
-      0 -8px 24px rgba(90, 21, 21, 0.25);
+    border-top: 3px solid #7A1F1F;
+    box-shadow: 0 -2px 0 #D4A017;
     display: flex;
     justify-content: space-between;
     align-items: center;
-    gap: 20px;
+    gap: 8px;
     z-index: 200;
     flex-wrap: wrap;
   }
 
   #hint {
-    font-size: 30px;
+    font-size: 13px;
     font-weight: 700;
     color: #7A1F1F;
     flex: 1;
-    text-shadow: 1px 1px 0 rgba(255, 255, 255, 0.5);
+    min-width: 100px;
+    line-height: 1.3;
   }
 
   .btn {
     font-family: inherit;
-    font-size: 28px;
+    font-size: 13px;
     font-weight: 900;
-    padding: 18px 40px;
-    border: 4px solid #5A1515;
-    border-radius: 14px;
+    padding: 8px 14px;
+    border: 3px solid #5A1515;
+    border-radius: 10px;
     background: linear-gradient(180deg, #A83232 0%, #7A1F1F 100%);
     color: #F5E6C8;
     cursor: pointer;
-    transition: all 0.15s cubic-bezier(0.34, 1.56, 0.64, 1);
-    min-width: 180px;
-    text-shadow: 1px 2px 0 rgba(0, 0, 0, 0.3);
-    box-shadow:
-      0 4px 0 #5A1515,
-      0 6px 12px rgba(90, 21, 21, 0.35);
+    min-width: 70px;
+    box-shadow: 0 3px 0 #5A1515;
   }
 
-  .btn:hover:not(:disabled) {
-    background: linear-gradient(180deg, #F0C952 0%, #D4A017 100%);
-    color: #2B1A08;
-    transform: translateY(-3px);
+  .btn:active:not(:disabled) {
+    transform: translateY(2px);
+    box-shadow: 0 1px 0 #5A1515;
   }
 
   .btn:disabled {
@@ -161,18 +127,13 @@
     border-color: #8A7A58;
     color: #6A5A40;
     cursor: not-allowed;
-    box-shadow: 0 4px 0 #8A7A58;
+    box-shadow: 0 3px 0 #8A7A58;
   }
 
   .btn.secondary {
     background: linear-gradient(180deg, #F5E6C8 0%, #E8D4A8 100%);
     color: #7A1F1F;
-    box-shadow: 0 4px 0 #7A1F1F, 0 6px 12px rgba(90, 21, 21, 0.25);
-  }
-
-  .btn.secondary:hover:not(:disabled) {
-    background: linear-gradient(180deg, #A83232 0%, #7A1F1F 100%);
-    color: #F5E6C8;
+    box-shadow: 0 3px 0 #7A1F1F;
   }
 
   #finish-btn {
@@ -182,17 +143,22 @@
     animation: pulse 1.5s ease-in-out infinite;
   }
 
-  #finish-btn.show {
-    display: inline-block;
-  }
-
-  #finish-btn:hover {
-    transform: translateY(-3px) scale(1.05);
-  }
+  #finish-btn.show { display: inline-block; }
 
   @keyframes pulse {
-    0%, 100% { box-shadow: 0 4px 0 #5A1515, 0 6px 12px rgba(90, 21, 21, 0.35); }
-    50% { box-shadow: 0 4px 0 #5A1515, 0 6px 20px rgba(240, 201, 82, 0.7); }
+    0%, 100% { box-shadow: 0 3px 0 #5A1515, 0 4px 8px rgba(90,21,21,0.35); }
+    50% { box-shadow: 0 3px 0 #5A1515, 0 4px 14px rgba(240, 201, 82, 0.7); }
+  }
+
+  @media (max-width: 600px) {
+    #hint { font-size: 11px; }
+    .btn { font-size: 11px; padding: 6px 10px; min-width: 55px; }
+    #footer { padding: 6px 8px; gap: 5px; }
+  }
+
+  @media (max-width: 400px) {
+    #hint { font-size: 10px; }
+    .btn { font-size: 10px; padding: 5px 8px; min-width: 50px; }
   }
 </style>
 </head>
@@ -207,55 +173,74 @@
 </div>
 
 <div id="footer">
-  <div id="hint">💡 由最細銀碼開始，逐個連埋佢啦！</div>
+  <div id="hint">💡 由 1 元硬幣開始，畫一條線由 1 元硬幣之後到 10 元紙幣，然後到 2 元硬幣，如此類推。最後在 100 元紙幣完成。</div>
   <button class="btn secondary" id="undo-btn" disabled>↩️ 撤銷</button>
   <button class="btn" id="restart-btn">🔄 重新開始</button>
-  <button class="btn" id="finish-btn" style="display:none !important;">✅ 完成</button>
+  <button class="btn" id="finish-btn">✅ 完成</button>
 </div>
 
 <script>
 // ═══════════════════════════════════════════
-// Streamlit 通訊
+// 8 個 item
 // ═══════════════════════════════════════════
-function sendToStreamlit(data) {
-  if (typeof Streamlit !== "undefined") {
-    Streamlit.setComponentValue(data);
-  } else {
-    console.log("（測試模式）要傳去 Streamlit：", data);
-  }
-}
-
-if (typeof Streamlit !== "undefined") {
-  Streamlit.events.addEventListener(Streamlit.RENDER_EVENT, () => {
-    Streamlit.setFrameHeight();
-  });
-  Streamlit.setFrameHeight();
-}
-
-// ═══════════════════════════════════════════
-// 硬幣設定
-// ═══════════════════════════════════════════
-const COINS = [
-  { id: "10c", label: "一毫子", value: 0.10, c1: "#D4B584", c2: "#8B6F3A", c3: "#6A4F28", text: "10¢" },
-  { id: "1d",  label: "一蚊",   value: 1.00, c1: "#F0D580", c2: "#B08F2E", c3: "#8A6F1E", text: "$1" },
-  { id: "20c", label: "兩毫子", value: 0.20, c1: "#D4B584", c2: "#8B6F3A", c3: "#6A4F28", text: "20¢" },
-  { id: "2d",  label: "兩蚊",   value: 2.00, c1: "#F0D580", c2: "#B08F2E", c3: "#8A6F1E", text: "$2" },
-  { id: "50c", label: "五毫子", value: 0.50, c1: "#D4B584", c2: "#8B6F3A", c3: "#6A4F28", text: "50¢" },
-  { id: "5d",  label: "五蚊",   value: 5.00, c1: "#E8E8E8", c2: "#9A9A9A", c3: "#6A6A6A", text: "$5" },
+const ITEMS = [
+  { id: "1d",   type: "coin",  text: "$1",   value: 1,
+    c1: "#F0D580", c2: "#B08F2E", c3: "#8A6F1E" },
+  { id: "10b",  type: "bill",  text: "$10",  value: 10,
+    c1: "#C9A0DC", c2: "#9B59B6", c3: "#6A3B8A" },
+  { id: "2d",   type: "coin",  text: "$2",   value: 2,
+    c1: "#F0D580", c2: "#B08F2E", c3: "#8A6F1E" },
+  { id: "20b",  type: "bill",  text: "$20",  value: 20,
+    c1: "#8AB6E8", c2: "#4A7BC4", c3: "#2D4A8A" },
+  { id: "5d",   type: "coin",  text: "$5",   value: 5,
+    c1: "#E8E8E8", c2: "#9A9A9A", c3: "#6A6A6A" },
+  { id: "50b",  type: "bill",  text: "$50",  value: 50,
+    c1: "#A0D9A0", c2: "#4A8A4E", c3: "#2D5A30" },
+  { id: "10d",  type: "coin",  text: "$10",  value: 10,
+    c1: "#D4B584", c2: "#8B6F3A", c3: "#6A4F28" },
+  { id: "100b", type: "bill",  text: "$100", value: 100,
+    c1: "#E88A8A", c2: "#C0392B", c3: "#7A1F1F" },
 ];
 
-const CORRECT_SEQUENCE = ["10c", "1d", "20c", "2d", "50c", "5d"];
-const COIN_SIZE = 110;
-const FOOTER_H = 180;
-const PADDING = 150;
-const MIN_DIST = COIN_SIZE + 40;
-const TARGET = COINS.length - 1;
+const CORRECT_SEQUENCE = ["1d", "10b", "2d", "20b", "5d", "50b", "10d", "100b"];
+const TARGET_CONNECTIONS = ITEMS.length - 1;
 
+// ═══════════════════════════════════════════
+// 響應式尺寸（手機優化）
+// ═══════════════════════════════════════════
+function getSizes() {
+  const w = window.innerWidth;
+
+  let coinSize, billW, billH, footerH;
+
+  if (w < 400) {
+    coinSize = 50; billW = 65; billH = 42; footerH = 90;
+  } else if (w < 600) {
+    coinSize = 60; billW = 80; billH = 50; footerH = 100;
+  } else if (w < 900) {
+    coinSize = 80; billW = 108; billH = 68; footerH = 115;
+  } else {
+    coinSize = 100; billW = 135; billH = 85; footerH = 130;
+  }
+
+  return { coinSize, billW, billH, footerH };
+}
+
+let SIZES = getSizes();
+
+function getItemSize(item) {
+  return item.type === "coin"
+    ? { w: SIZES.coinSize, h: SIZES.coinSize }
+    : { w: SIZES.billW, h: SIZES.billH };
+}
+
+// ═══════════════════════════════════════════
+// 狀態
+// ═══════════════════════════════════════════
 let state = {
-  coins: [],
+  items: [],
   connections: [],
   undoCount: 0,
-  undoEvents: [],
   startTime: null,
   dragging: null,
   dragStart: null,
@@ -277,61 +262,100 @@ function segmentsIntersect(a, b, c, d) {
          ((d3 > 0 && d4 < 0) || (d3 < 0 && d4 > 0));
 }
 
-function coinCenter(c) { return { x: c.x + c.size / 2, y: c.y + c.size / 2 }; }
+function itemCenter(item) {
+  return { x: item.x + item.w / 2, y: item.y + item.h / 2 };
+}
 
-function isInsideCoin(px, py, c) {
-  const ct = coinCenter(c);
-  return Math.hypot(px - ct.x, py - ct.y) <= (c.size / 2 + 30);
+function isInsideItem(px, py, item) {
+  const c = itemCenter(item);
+  const r = Math.max(item.w, item.h) / 2 + 15;
+  return Math.hypot(px - c.x, py - c.y) <= r;
 }
 
 // ═══════════════════════════════════════════
-// 生成唔交叉排列
+// 生成唔交叉排列（手機優化）
 // ═══════════════════════════════════════════
 function generateLayout(W, H) {
-  const SLOTS = [
-    { x: 0.15, y: 0.20 }, { x: 0.85, y: 0.20 },
-    { x: 0.50, y: 0.50 },
-    { x: 0.15, y: 0.80 }, { x: 0.85, y: 0.80 },
-    { x: 0.50, y: 0.15 },
-  ];
-  const JITTER = 40;
+  const isMobile = window.innerWidth < 600;
 
   for (let attempt = 0; attempt < 300; attempt++) {
-    const shuffled = [...SLOTS].sort(() => Math.random() - 0.5);
-    const candidate = COINS.map((c, i) => {
-      const slot = shuffled[i];
-      const cx = slot.x * W;
-      const cy = slot.y * H;
-      const ox = (Math.random() - 0.5) * 2 * JITTER;
-      const oy = (Math.random() - 0.5) * 2 * JITTER;
+    const placed = [];
+    let ok = true;
+
+    for (let i = 0; i < ITEMS.length; i++) {
+      const item = ITEMS[i];
+      const size = getItemSize(item);
+      let x, y, tries = 0, found = false;
+      const extraGap = isMobile ? 8 : 20;
+      const minDist = Math.max(size.w, size.h) + extraGap;
+
+      while (tries < 200) {
+        const margin = isMobile ? 30 : 20;
+        x = size.w / 2 + margin + Math.random() * (W - size.w - margin * 2);
+        y = size.h / 2 + margin + Math.random() * (H - size.h - margin * 2);
+
+        const conflict = placed.some(p => {
+          const dx = p.x - x;
+          const dy = p.y - y;
+          return Math.hypot(dx, dy) < Math.max(minDist, p.minDist);
+        });
+
+        if (!conflict) { found = true; break; }
+        tries++;
+      }
+
+      if (!found) { ok = false; break; }
+      placed.push({ x, y, minDist });
+    }
+
+    if (!ok) continue;
+
+    const candidate = ITEMS.map((item, i) => {
+      const size = getItemSize(item);
       return {
-        ...c, size: COIN_SIZE,
-        x: cx + ox - COIN_SIZE / 2,
-        y: cy + oy - COIN_SIZE / 2,
+        ...item,
+        w: size.w, h: size.h,
+        x: placed[i].x - size.w / 2,
+        y: placed[i].y - size.h / 2,
         connectedFrom: false, connectedTo: false, el: null,
       };
     });
+
     if (sequenceHasNoCrossing(candidate, CORRECT_SEQUENCE)) return candidate;
   }
 
-  return COINS.map((c, i) => {
-    const slot = SLOTS[i];
+  // Fallback：3×3 grid
+  const GRID = [];
+  for (let row = 0; row < 3; row++) {
+    for (let col = 0; col < 3; col++) {
+      GRID.push({
+        x: W * 0.18 + col * W * 0.32,
+        y: H * 0.18 + row * H * 0.32,
+      });
+    }
+  }
+  const shuffled = [...GRID].sort(() => Math.random() - 0.5);
+  const chosen = shuffled.slice(0, 8);
+
+  return ITEMS.map((item, i) => {
+    const size = getItemSize(item);
     return {
-      ...c, size: COIN_SIZE,
-      x: slot.x * W - COIN_SIZE / 2,
-      y: slot.y * H - COIN_SIZE / 2,
+      ...item,
+      w: size.w, h: size.h,
+      x: chosen[i].x - size.w / 2,
+      y: chosen[i].y - size.h / 2,
       connectedFrom: false, connectedTo: false, el: null,
     };
   });
 }
 
-function sequenceHasNoCrossing(coins, seq) {
+function sequenceHasNoCrossing(items, seq) {
   const lines = [];
   for (let i = 0; i < seq.length - 1; i++) {
-    const a = coins.find(c => c.id === seq[i]);
-    const b = coins.find(c => c.id === seq[i + 1]);
+    const a = items.find(c => c.id === seq[i]);
+    const b = items.find(c => c.id === seq[i + 1]);
     if (!a || !b) return false;
-    lines.push({ a: coinCenter(a), b: coinCenter(b) });
+    lines.push({ a: itemCenter(a), b: itemCenter(b) });
   }
   for (let i = 0; i < lines.length; i++) {
     for (let j = i + 1; j < lines.length; j++) {
@@ -345,18 +369,18 @@ function sequenceHasNoCrossing(coins, seq) {
 // ═══════════════════════════════════════════
 // 硬幣 SVG
 // ═══════════════════════════════════════════
-function coinSvg(c) {
-  const gid = "g-" + c.id + "-" + Math.random().toString(36).slice(2, 6);
-  const sid = "s-" + c.id + "-" + Math.random().toString(36).slice(2, 6);
-  const s = c.size;
+function coinSvg(item) {
+  const gid = "g-" + item.id + "-" + Math.random().toString(36).slice(2, 6);
+  const sid = "s-" + item.id + "-" + Math.random().toString(36).slice(2, 6);
+  const s = item.w;
   return `
     <svg viewBox="0 0 200 200" width="${s}" height="${s}" xmlns="http://www.w3.org/2000/svg">
       <defs>
         <radialGradient id="${gid}" cx="35%" cy="30%" r="80%">
           <stop offset="0%" stop-color="#FFFBE8"/>
-          <stop offset="25%" stop-color="${c.c1}"/>
-          <stop offset="70%" stop-color="${c.c2}"/>
-          <stop offset="100%" stop-color="${c.c3}"/>
+          <stop offset="25%" stop-color="${item.c1}"/>
+          <stop offset="70%" stop-color="${item.c2}"/>
+          <stop offset="100%" stop-color="${item.c3}"/>
         </radialGradient>
         <linearGradient id="${sid}" x1="20%" y1="10%" x2="80%" y2="90%">
           <stop offset="0%" stop-color="#FFF" stop-opacity=".5"/>
@@ -364,15 +388,41 @@ function coinSvg(c) {
           <stop offset="100%" stop-color="#000" stop-opacity=".15"/>
         </linearGradient>
       </defs>
-      <circle cx="100" cy="100" r="98" fill="${c.c3}" opacity=".7"/>
-      <circle cx="100" cy="100" r="94" fill="url(#${gid})" stroke="${c.c3}" stroke-width="2.5"/>
-      <circle cx="100" cy="100" r="88" fill="none" stroke="${c.c3}" stroke-width="2" stroke-dasharray="2 3" opacity=".7"/>
-      <circle cx="100" cy="100" r="78" fill="none" stroke="${c.c2}" stroke-width="1.5" opacity=".6"/>
+      <circle cx="100" cy="100" r="98" fill="${item.c3}" opacity=".7"/>
+      <circle cx="100" cy="100" r="94" fill="url(#${gid})" stroke="${item.c3}" stroke-width="2.5"/>
+      <circle cx="100" cy="100" r="88" fill="none" stroke="${item.c3}" stroke-width="2" stroke-dasharray="2 3" opacity=".7"/>
+      <circle cx="100" cy="100" r="78" fill="none" stroke="${item.c2}" stroke-width="1.5" opacity=".6"/>
       <circle cx="100" cy="100" r="94" fill="url(#${sid})" opacity=".8"/>
       <text x="100" y="118" text-anchor="middle"
-            font-family="Arial Black, sans-serif" font-size="54" font-weight="900"
-            fill="#2B1A08">${c.text}</text>
+            font-family="Arial Black, sans-serif" font-size="52" font-weight="900"
+            fill="#2B1A08">${item.text}</text>
       <ellipse cx="66" cy="58" rx="26" ry="16" fill="#FFF" opacity=".55" transform="rotate(-25 66 58)"/>
+    </svg>
+  `;
+}
+
+// ═══════════════════════════════════════════
+// 紙幣 SVG
+// ═══════════════════════════════════════════
+function billSvg(item) {
+  const gid = "g-" + item.id + "-" + Math.random().toString(36).slice(2, 6);
+  const w = item.w, h = item.h;
+  return `
+    <svg viewBox="0 0 200 130" width="${w}" height="${h}" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <linearGradient id="${gid}" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stop-color="${item.c1}"/>
+          <stop offset="50%" stop-color="${item.c2}"/>
+          <stop offset="100%" stop-color="${item.c3}"/>
+        </linearGradient>
+      </defs>
+      <rect x="4" y="4" width="192" height="122" rx="6" fill="url(#${gid})" stroke="${item.c3}" stroke-width="3"/>
+      <rect x="14" y="14" width="172" height="102" rx="4" fill="none" stroke="${item.c1}" stroke-width="2" opacity="0.6"/>
+      <text x="100" y="82" text-anchor="middle"
+            font-family="Arial Black, sans-serif" font-size="48" font-weight="900"
+            fill="#2B1A08" stroke="#FFF" stroke-width="1" paint-order="stroke fill">${item.text}</text>
+      <circle cx="30" cy="30" r="8" fill="${item.c3}" opacity="0.4"/>
+      <circle cx="170" cy="100" r="8" fill="${item.c3}" opacity="0.4"/>
     </svg>
   `;
 }
@@ -381,6 +431,7 @@ function coinSvg(c) {
 // 初始化
 // ═══════════════════════════════════════════
 function init() {
+  SIZES = getSizes();
   const svg = document.getElementById("canvas");
   svg.setAttribute("width", window.innerWidth);
   svg.setAttribute("height", window.innerHeight);
@@ -388,22 +439,22 @@ function init() {
 
   const wrap = document.getElementById("game-wrap");
   const W = wrap.clientWidth;
-  const H = wrap.clientHeight - FOOTER_H;
+  const H = wrap.clientHeight - SIZES.footerH;
 
-  state.coins = generateLayout(W, H);
+  state.items = generateLayout(W, H);
 
-  state.coins.forEach(c => {
+  state.items.forEach(item => {
     const el = document.createElement("div");
     el.className = "coin";
-    el.style.left = c.x + "px";
-    el.style.top = c.y + "px";
-    el.style.width = c.size + "px";
-    el.style.height = c.size + "px";
-    el.innerHTML = coinSvg(c);
-    el.dataset.coinId = c.id;
-    el.addEventListener("pointerdown", onCoinPointerDown);
+    el.style.left = item.x + "px";
+    el.style.top = item.y + "px";
+    el.style.width = item.w + "px";
+    el.style.height = item.h + "px";
+    el.innerHTML = item.type === "coin" ? coinSvg(item) : billSvg(item);
+    el.dataset.itemId = item.id;
+    el.addEventListener("pointerdown", onItemPointerDown);
     wrap.appendChild(el);
-    c.el = el;
+    item.el = el;
   });
 
   document.getElementById("undo-btn").addEventListener("click", undo);
@@ -416,25 +467,25 @@ function init() {
 // ═══════════════════════════════════════════
 // 拖曳
 // ═══════════════════════════════════════════
-function onCoinPointerDown(e) {
+function onItemPointerDown(e) {
   e.preventDefault();
-  const id = e.currentTarget.dataset.coinId;
-  const c = state.coins.find(x => x.id === id);
-  if (!c || c.connectedFrom) return;
+  const id = e.currentTarget.dataset.itemId;
+  const item = state.items.find(x => x.id === id);
+  if (!item || item.connectedFrom) return;
 
-  c.el.classList.add("dragging");
-  state.dragging = c;
+  item.el.classList.add("dragging");
+  state.dragging = item;
   state.dragStart = performance.now();
 
-  const a = coinCenter(c);
+  const a = itemCenter(item);
   const layer = document.getElementById("lines-layer");
   const line = document.createElementNS("http://www.w3.org/2000/svg", "line");
   line.setAttribute("x1", a.x); line.setAttribute("y1", a.y);
   line.setAttribute("x2", e.clientX); line.setAttribute("y2", e.clientY);
   line.setAttribute("stroke", "#7A1F1F");
-  line.setAttribute("stroke-width", "10");
+  line.setAttribute("stroke-width", "6");
   line.setAttribute("stroke-linecap", "round");
-  line.setAttribute("stroke-dasharray", "16 10");
+  line.setAttribute("stroke-dasharray", "10 8");
   line.setAttribute("opacity", "0.9");
   line.id = "ghost";
   layer.appendChild(line);
@@ -449,10 +500,11 @@ function onPointerMove(e) {
   line.setAttribute("x2", e.clientX);
   line.setAttribute("y2", e.clientY);
 
-  state.coins.forEach(c => {
-    c.el.classList.remove("highlight");
-    if (!c.connectedTo && c !== state.dragging && isInsideCoin(e.clientX, e.clientY, c)) {
-      c.el.classList.add("highlight");
+  state.items.forEach(item => {
+    item.el.classList.remove("highlight");
+    if (!item.connectedTo && item !== state.dragging &&
+        isInsideItem(e.clientX, e.clientY, item)) {
+      item.el.classList.add("highlight");
     }
   });
 }
@@ -462,13 +514,13 @@ function onPointerUp(e) {
   if (!from) return;
 
   from.el.classList.remove("dragging");
-  state.coins.forEach(c => c.el.classList.remove("highlight"));
+  state.items.forEach(item => item.el.classList.remove("highlight"));
 
   const ghost = document.getElementById("ghost");
   if (ghost) ghost.remove();
 
-  const target = state.coins.find(c =>
-    !c.connectedTo && c !== from && isInsideCoin(e.clientX, e.clientY, c)
+  const target = state.items.find(item =>
+    !item.connectedTo && item !== from && isInsideItem(e.clientX, e.clientY, item)
   );
 
   if (target) makeConnection(from, target, state.dragStart);
@@ -484,11 +536,11 @@ function onPointerUp(e) {
 // ═══════════════════════════════════════════
 function makeConnection(from, to, startTime) {
   const layer = document.getElementById("lines-layer");
-  const a = coinCenter(from);
-  const b = coinCenter(to);
+  const a = itemCenter(from);
+  const b = itemCenter(to);
   const time = (performance.now() - startTime) / 1000;
 
-  const SEG = 8, JIT = 3;
+  const SEG = 6, JIT = 2;
   const pts = [];
   for (let i = 0; i <= SEG; i++) {
     const t = i / SEG;
@@ -502,7 +554,7 @@ function makeConnection(from, to, startTime) {
   }
   const d = "M " + pts.map(p => `${p[0]} ${p[1]}`).join(" L ");
 
-  [["#D4A017", 16, .25], ["#5A1515", 12, .85], ["#A83232", 7, 1]]
+  [["#D4A017", 10, .25], ["#5A1515", 7, .85], ["#A83232", 4, 1]]
     .forEach(([color, w, op]) => {
       const p = document.createElementNS("http://www.w3.org/2000/svg", "path");
       p.setAttribute("d", d);
@@ -523,9 +575,10 @@ function makeConnection(from, to, startTime) {
 
   document.getElementById("undo-btn").disabled = false;
 
- if (state.connections.length === TARGET) {
-    document.getElementById("hint").textContent = "✅ 完成啦！請向下 scroll 撳「➡️ 去下一關」";
- }
+  if (state.connections.length === TARGET_CONNECTIONS) {
+    document.getElementById("finish-btn").classList.add("show");
+    document.getElementById("hint").textContent = "✅ 完成啦！撳「完成」去下一關";
+  }
 }
 
 // ═══════════════════════════════════════════
@@ -542,18 +595,19 @@ function undo() {
 
   const still = new Set();
   state.connections.forEach(c => { still.add(c.from); still.add(c.to); });
-  state.coins.forEach(c => {
-    c.connectedFrom = state.connections.some(x => x.from === c.id);
-    c.connectedTo = state.connections.some(x => x.to === c.id);
-    c.el.classList.toggle("connected", still.has(c.id));
+  state.items.forEach(item => {
+    item.connectedFrom = state.connections.some(x => x.from === item.id);
+    item.connectedTo = state.connections.some(x => x.to === item.id);
+    item.el.classList.toggle("connected", still.has(item.id));
   });
 
   state.undoCount++;
   document.getElementById("undo-btn").disabled = state.connections.length === 0;
 
- if (state.connections.length < TARGET) {
-    document.getElementById("hint").textContent = "💡 由最細銀碼開始，逐個連埋佢啦！";
- }
+  if (state.connections.length < TARGET_CONNECTIONS) {
+    document.getElementById("finish-btn").classList.remove("show");
+    document.getElementById("hint").textContent = "💡 由 1 元硬幣開始，畫一條線由 1 元硬幣之後到 10 元紙幣，然後到 2 元硬幣，如此類推。最後在 100 元紙幣完成。";
+  }
 }
 
 // ═══════════════════════════════════════════
@@ -570,16 +624,11 @@ function finishGame() {
     completed: true,
     total_time_sec: parseFloat(totalTime.toFixed(2)),
     sequence: seq,
-    connections: state.connections,
     undo_count: state.undoCount,
     is_correct: isCorrect,
-    correct_sequence: CORRECT_SEQUENCE,
   };
-
-  console.log("=== 傳去 Streamlit ===");
+  console.log("=== 遊戲結果 ===");
   console.log(JSON.stringify(result, null, 2));
-
-  sendToStreamlit(result);
 }
 
 // ═══════════════════════════════════════════
@@ -588,16 +637,23 @@ function finishGame() {
 function restart() {
   document.querySelectorAll(".coin").forEach(el => el.remove());
   document.getElementById("lines-layer").innerHTML = "";
-  document.getElementById("hint").textContent = "💡 由最細銀碼開始，逐個連埋佢啦！";
+  document.getElementById("finish-btn").classList.remove("show");
+  document.getElementById("hint").textContent = "💡 由 1 元硬幣開始，畫一條線由 1 元硬幣之後到 10 元紙幣，然後到 2 元硬幣，如此類推。最後在 100 元紙幣完成。";
 
   state = {
-    coins: [], connections: [], undoCount: 0, undoEvents: [],
+    items: [], connections: [], undoCount: 0,
     startTime: null, dragging: null, dragStart: null,
   };
   init();
 }
 
 window.addEventListener("load", init);
+window.addEventListener("resize", () => {
+  if (state.items.length && state.connections.length === 0) {
+    restart();
+  }
+});
 </script>
+
 </body>
 </html>
