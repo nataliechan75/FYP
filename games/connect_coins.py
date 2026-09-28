@@ -9,11 +9,9 @@ import json
 
 
 def render():
-    # 記錄開始時間
     if "game1_start" not in st.session_state:
         st.session_state.game1_start = time.time()
 
-    # 載入 HTML
     html_path = (
         Path(__file__).parent.parent
         / "components"
@@ -28,29 +26,37 @@ def render():
 
     html_content = html_path.read_text(encoding="utf-8")
 
-    # 顯示 HTML
     components.html(html_content, height=500, scrolling=False)
 
-    # ★ 隱藏 text_input（接收 HTML 注入嘅數據）★
-    with st.form(key="game1_form", clear_on_submit=False):
-        # 隱藏嘅 input（玩家睇唔到）
-        result_json = st.text_input(
-            "result",
-            key="game1_result",
-            label_visibility="collapsed",
-        )
+    # ★ 唔用 st.form，直接用 st.text_input ★
+    # 用一個細嘅 placeholder + 隱藏 label
+    st.markdown(
+        """
+        <style>
+        div[data-testid="stTextInput"] label {
+            display: none !important;
+        }
+        div[data-testid="stTextInput"] {
+            position: absolute;
+            left: -9999px;
+            width: 1px;
+            height: 1px;
+            overflow: hidden;
+        }
+        </style>
+        """,
+        unsafe_allow_html=True,
+    )
 
-        # 完成按鈕
-        col1, col2, col3 = st.columns([1, 2, 1])
-        with col2:
-            submitted = st.form_submit_button(
-                "➡️ 去下一關",
-                use_container_width=True,
-                type="primary",
-            )
+    result_json = st.text_input(
+        "result",
+        key="game1_result",
+    )
 
-        if submitted:
-            # 讀 HTML 注入嘅數據
+    # 完成按鈕
+    col1, col2, col3 = st.columns([1, 2, 1])
+    with col2:
+        if st.button("➡️ 去下一關", type="primary", use_container_width=True):
             data = {}
             if result_json:
                 try:
@@ -58,10 +64,8 @@ def render():
                 except Exception as e:
                     data = {"raw": result_json, "error": str(e)}
 
-            # 記錄時間
             elapsed = time.time() - st.session_state.game1_start
 
-            # 儲存數據
             st.session_state.scores["game1"] = {
                 "total_time_sec": round(elapsed, 2),
                 "completed_at": time.strftime("%Y-%m-%d %H:%M:%S"),
@@ -71,6 +75,5 @@ def render():
                 "score": 1 if data.get("is_correct") else 0,
             }
 
-            # 跳下一關
             from core.state import next_game
             next_game()
