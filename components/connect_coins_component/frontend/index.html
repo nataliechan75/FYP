@@ -73,17 +73,13 @@
     transform: scale(1.1);
   }
 
-  .coin.crossing {
-    filter: drop-shadow(0 0 16px rgba(200, 0, 0, 1));
-    transform: scale(1.1);
-  }
-
   .coin svg {
     width: 100%; height: 100%;
     pointer-events: none;
     display: block;
   }
 
+  /* ★ 底部：文字上、按鈕下 ★ */
   #footer {
     position: fixed;
     bottom: 0; left: 0; right: 0;
@@ -94,20 +90,26 @@
     border-top: 3px solid #7A1F1F;
     box-shadow: 0 -2px 0 #D4A017;
     display: flex;
-    justify-content: space-between;
+    flex-direction: column;
     align-items: center;
     gap: 10px;
     z-index: 200;
-    flex-wrap: wrap;
   }
 
   #hint {
-    font-size: 16px;
+    font-size: 15px;
     font-weight: 700;
     color: #7A1F1F;
-    flex: 1;
-    min-width: 120px;
+    width: 100%;
+    text-align: center;
     line-height: 1.4;
+  }
+
+  #footer-buttons {
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+    flex-wrap: wrap;
   }
 
   .btn {
@@ -199,9 +201,11 @@
 </div>
 
 <div id="footer">
-  <div id="hint">💡 由 1 元硬幣開始，畫一條線到 10 元紙幣，然後到 2 元硬幣，如此類推。最後在 100 元紙幣完成。</div>
-  <button class="btn secondary" id="undo-btn" disabled>↩️ 撤銷</button>
-  <button class="btn" id="restart-btn">🔄 重新開始</button>
+  <div id="hint">💡 由 1 元硬幣開始，畫一條線由 1 元硬幣之後到 10 元紙幣，然後到 2 元硬幣，如此類推。最後在 100 元紙幣完成。</div>
+  <div id="footer-buttons">
+    <button class="btn secondary" id="undo-btn" disabled>↩️ 撤銷</button>
+    <button class="btn" id="restart-btn">🔄 重新開始</button>
+  </div>
 </div>
 
 <div id="finish-popup">
@@ -234,13 +238,10 @@ const ITEMS = [
 const CORRECT_SEQUENCE = ["1d", "10b", "2d", "20b", "5d", "50b", "10d", "100b"];
 const TARGET_CONNECTIONS = ITEMS.length - 1;
 
-// ═══════════════════════════════════════════
-// 固定尺寸（縮細咗）
-// ═══════════════════════════════════════════
 const COIN_SIZE = 65;
 const BILL_W = 90;
 const BILL_H = 58;
-const FOOTER_H = 140;
+const FOOTER_H = 170;
 
 function getSizes() {
   return {
@@ -289,29 +290,6 @@ function isInsideItem(px, py, item) {
   const c = itemCenter(item);
   const r = Math.max(item.w, item.h) / 2 + 15;
   return Math.hypot(px - c.x, py - c.y) <= r;
-}
-
-function pointToSegmentDistance(C, A, B) {
-  const dx = B.x - A.x;
-  const dy = B.y - A.y;
-  const lenSq = dx * dx + dy * dy;
-  if (lenSq === 0) return Math.hypot(C.x - A.x, C.y - A.y);
-  let t = ((C.x - A.x) * dx + (C.y - A.y) * dy) / lenSq;
-  t = Math.max(0, Math.min(1, t));
-  const px = A.x + t * dx;
-  const py = A.y + t * dy;
-  return Math.hypot(C.x - px, C.y - py);
-}
-
-function lineIntersectsItems(A, B, items, excludeIds) {
-  for (const item of items) {
-    if (excludeIds.includes(item.id)) continue;
-    const C = itemCenter(item);
-    const radius = Math.max(item.w, item.h) / 2;
-    const dist = pointToSegmentDistance(C, A, B);
-    if (dist < radius) return true;
-  }
-  return false;
 }
 
 function generateLayout(W, H) {
@@ -385,7 +363,6 @@ function generateLayout(W, H) {
   });
 }
 
-// ★ 只檢查線與線交叉（唔檢查穿過硬幣）★
 function sequenceHasNoCrossing(items, seq) {
   const lines = [];
   for (let i = 0; i < seq.length - 1; i++) {
@@ -632,7 +609,7 @@ function undo() {
 
   if (state.connections.length < TARGET_CONNECTIONS) {
     document.getElementById("finish-popup").classList.remove("show");
-    document.getElementById("hint").textContent = "💡 由 1 元硬幣開始，畫一條線到 10 元紙幣，然後到 2 元硬幣，如此類推。最後在 100 元紙幣完成。";
+    document.getElementById("hint").textContent = "💡 由 1 元硬幣開始，畫一條線由 1 元硬幣之後到 10 元紙幣，然後到 2 元硬幣，如此類推。最後在 100 元紙幣完成。";
   }
 }
 
@@ -640,7 +617,7 @@ function restart() {
   document.querySelectorAll(".coin").forEach(el => el.remove());
   document.getElementById("lines-layer").innerHTML = "";
   document.getElementById("finish-popup").classList.remove("show");
-  document.getElementById("hint").textContent = "💡 由 1 元硬幣開始，畫一條線到 10 元紙幣，然後到 2 元硬幣，如此類推。最後在 100 元紙幣完成。";
+  document.getElementById("hint").textContent = "💡 由 1 元硬幣開始，畫一條線由 1 元硬幣之後到 10 元紙幣，然後到 2 元硬幣，如此類推。最後在 100 元紙幣完成。";
 
   state = {
     items: [], connections: [], undoCount: 0,
