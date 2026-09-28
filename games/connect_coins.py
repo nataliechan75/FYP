@@ -28,20 +28,17 @@ def render():
 
     components.html(html_content, height=500, scrolling=False)
 
-    # ★ 唔用 st.form，直接用 st.text_input ★
-    # 用一個細嘅 placeholder + 隱藏 label
+    # ★ 唔用 st.form ★
+    # ★ 加 CSS 隱藏個 text_input ★
     st.markdown(
         """
         <style>
-        div[data-testid="stTextInput"] label {
-            display: none !important;
-        }
         div[data-testid="stTextInput"] {
-            position: absolute;
-            left: -9999px;
-            width: 1px;
-            height: 1px;
-            overflow: hidden;
+            position: absolute !important;
+            left: -9999px !important;
+            width: 1px !important;
+            height: 1px !important;
+            overflow: hidden !important;
         }
         </style>
         """,
@@ -56,7 +53,7 @@ def render():
     # 完成按鈕
     col1, col2, col3 = st.columns([1, 2, 1])
     with col2:
-        if st.button("➡️ 去下一關", type="primary", use_container_width=True):
+        if st.button("➡️ 去下一關", type="primary", use_container_width=True, key="next_1"):
             data = {}
             if result_json:
                 try:
