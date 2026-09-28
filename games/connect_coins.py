@@ -29,34 +29,74 @@ def render():
     # 顯示 HTML 遊戲
     components.html(html_content, height=500, scrolling=False)
 
-    # ★ text_input 可見（唔隱藏）★
+    # ★ 完成按鈕 ★
+    col1, col2, col3 = st.columns([1, 2, 1])
+    with col2:
+        submitted = st.button(
+            "➡️ 去下一關",
+            type="primary",
+            use_container_width=True,
+            key="next_1",
+        )
+
+    # ★ text_input 放喺按鈕之後（縮到 1px）★
+    st.markdown(
+        """
+        <style>
+        div[data-testid="stTextInput"] {
+            height: 1px !important;
+            min-height: 1px !important;
+            max-height: 1px !important;
+            overflow: hidden !important;
+            margin: 0 !important;
+            padding: 0 !important;
+            border: none !important;
+        }
+        div[data-testid="stTextInput"] > div {
+            height: 1px !important;
+            overflow: hidden !important;
+            margin: 0 !important;
+            padding: 0 !important;
+        }
+        div[data-testid="stTextInput"] input {
+            height: 1px !important;
+            font-size: 1px !important;
+            padding: 0 !important;
+            border: none !important;
+        }
+        div[data-testid="stTextInput"] label {
+            display: none !important;
+        }
+        </style>
+        """,
+        unsafe_allow_html=True,
+    )
+
     result_json = st.text_input(
         "result",
         key="game1_result",
         label_visibility="collapsed",
     )
 
-    # 完成按鈕
-    col1, col2, col3 = st.columns([1, 2, 1])
-    with col2:
-        if st.button("➡️ 去下一關", type="primary", use_container_width=True, key="next_1"):
-            data = {}
-            if result_json:
-                try:
-                    data = json.loads(result_json)
-                except Exception as e:
-                    data = {"raw": result_json, "error": str(e)}
+    # ★ 處理提交 ★
+    if submitted:
+        data = {}
+        if result_json:
+            try:
+                data = json.loads(result_json)
+            except Exception as e:
+                data = {"raw": result_json, "error": str(e)}
 
-            elapsed = time.time() - st.session_state.game1_start
+        elapsed = time.time() - st.session_state.game1_start
 
-            st.session_state.scores["game1"] = {
-                "total_time_sec": round(elapsed, 2),
-                "completed_at": time.strftime("%Y-%m-%d %H:%M:%S"),
-                "is_correct": data.get("is_correct", None),
-                "sequence": data.get("sequence", []),
-                "undo_count": data.get("undo_count", 0),
-                "score": 1 if data.get("is_correct") else 0,
-            }
+        st.session_state.scores["game1"] = {
+            "total_time_sec": round(elapsed, 2),
+            "completed_at": time.strftime("%Y-%m-%d %H:%M:%S"),
+            "is_correct": data.get("is_correct", None),
+            "sequence": data.get("sequence", []),
+            "undo_count": data.get("undo_count", 0),
+            "score": 1 if data.get("is_correct") else 0,
+        }
 
-            from core.state import next_game
-            next_game()
+        from core.state import next_game
+        next_game()
