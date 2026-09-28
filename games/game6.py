@@ -16,7 +16,7 @@ def render():
 
     st.components.v1.html(
         html_content,
-        height=700,
+        height=500,
         scrolling=False,
     )
 
