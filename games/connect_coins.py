@@ -1,11 +1,10 @@
 """
-第一關：接線遊戲（用 HTML Canvas 嵌入 + JS 注入數據）
+第一關：接線遊戲（用 HTML Canvas 嵌入）
 """
 import streamlit as st
 import streamlit.components.v1 as components
 from pathlib import Path
 import time
-import json
 
 
 def render():
@@ -28,32 +27,15 @@ def render():
 
     components.html(html_content, height=500, scrolling=False)
 
-    # ★ text_input 公開顯示 ★
-    result_json = st.text_input(
-        "result",
-        key="game1_result",
-        label_visibility="collapsed",
-    )
-
+    # 完成按鈕
     col1, col2, col3 = st.columns([1, 2, 1])
     with col2:
         if st.button("➡️ 去下一關", type="primary", use_container_width=True, key="next_1"):
-            data = {}
-            if result_json:
-                try:
-                    data = json.loads(result_json)
-                except Exception as e:
-                    data = {"raw": result_json, "error": str(e)}
-
             elapsed = time.time() - st.session_state.game1_start
 
             st.session_state.scores["game1"] = {
                 "total_time_sec": round(elapsed, 2),
                 "completed_at": time.strftime("%Y-%m-%d %H:%M:%S"),
-                "is_correct": data.get("is_correct", None),
-                "sequence": data.get("sequence", []),
-                "undo_count": data.get("undo_count", 0),
-                "score": 1 if data.get("is_correct") else 0,
             }
 
             from core.state import next_game
