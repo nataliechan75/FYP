@@ -102,7 +102,7 @@
   }
 
   #hint {
-    font-size: 22px;
+    font-size: 18px;
     font-weight: 700;
     color: #7A1F1F;
     flex: 1;
@@ -112,7 +112,7 @@
 
   .btn {
     font-family: inherit;
-    font-size: 20px;
+    font-size: 18px;
     font-weight: 900;
     padding: 12px 20px;
     border: 3px solid #5A1515;
@@ -186,22 +186,6 @@
     color: #5A4030;
     line-height: 1.6;
   }
-
-  @media (max-width: 600px) {
-    #hint { font-size: 14px; }
-    .btn { font-size: 14px; padding: 10px 16px; min-width: 75px; }
-    #footer { padding: 8px 10px; gap: 6px; }
-    #finish-card h2 { font-size: 32px; }
-    #finish-card p { font-size: 18px; }
-  }
-
-  @media (max-width: 400px) {
-    #hint { font-size: 12px; }
-    .btn { font-size: 12px; padding: 8px 12px; min-width: 65px; }
-    #finish-card { padding: 24px 28px; }
-    #finish-card h2 { font-size: 26px; }
-    #finish-card p { font-size: 16px; }
-  }
 </style>
 </head>
 <body>
@@ -250,19 +234,21 @@ const ITEMS = [
 const CORRECT_SEQUENCE = ["1d", "10b", "2d", "20b", "5d", "50b", "10d", "100b"];
 const TARGET_CONNECTIONS = ITEMS.length - 1;
 
+// ═══════════════════════════════════════════
+// 固定尺寸（唔分手機 / 桌面）
+// ═══════════════════════════════════════════
+const COIN_SIZE = 80;
+const BILL_W = 110;
+const BILL_H = 70;
+const FOOTER_H = 140;
+
 function getSizes() {
-  const w = window.innerWidth;
-  let coinSize, billW, billH, footerH;
-  if (w < 400) {
-    coinSize = 55; billW = 78; billH = 50; footerH = 120;
-  } else if (w < 600) {
-    coinSize = 65; billW = 92; billH = 60; footerH = 130;
-  } else if (w < 900) {
-    coinSize = 80; billW = 110; billH = 70; footerH = 140;
-  } else {
-    coinSize = 95; billW = 130; billH = 82; footerH = 150;
-  }
-  return { coinSize, billW, billH, footerH };
+  return {
+    coinSize: COIN_SIZE,
+    billW: BILL_W,
+    billH: BILL_H,
+    footerH: FOOTER_H,
+  };
 }
 
 let SIZES = getSizes();
@@ -329,8 +315,6 @@ function lineIntersectsItems(A, B, items, excludeIds) {
 }
 
 function generateLayout(W, H) {
-  const isMobile = window.innerWidth < 600;
-
   for (let attempt = 0; attempt < 500; attempt++) {
     const placed = [];
     let ok = true;
@@ -339,11 +323,10 @@ function generateLayout(W, H) {
       const item = ITEMS[i];
       const size = getItemSize(item);
       let x, y, tries = 0, found = false;
-      const extraGap = isMobile ? 8 : 20;
-      const minDist = Math.max(size.w, size.h) + extraGap;
+      const minDist = Math.max(size.w, size.h) + 20;
 
       while (tries < 200) {
-        const margin = isMobile ? 30 : 20;
+        const margin = 20;
         x = size.w / 2 + margin + Math.random() * (W - size.w - margin * 2);
         y = size.h / 2 + margin + Math.random() * (H - size.h - margin * 2);
 
@@ -377,6 +360,7 @@ function generateLayout(W, H) {
     if (sequenceIsValid(candidate, CORRECT_SEQUENCE)) return candidate;
   }
 
+  // Fallback: 3x3 grid
   const GRID = [];
   for (let row = 0; row < 3; row++) {
     for (let col = 0; col < 3; col++) {
