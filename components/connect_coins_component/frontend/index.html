@@ -199,7 +199,7 @@
 </div>
 
 <div id="footer">
-  <div id="hint">💡 由 1 元硬幣開始，畫一條線由 1 元硬幣之後到 10 元紙幣，然後到 2 元硬幣，如此類推。最後在 100 元紙幣完成。</div>
+  <div id="hint">💡 由 1 元硬幣開始，畫一條線到 10 元紙幣，然後到 2 元硬幣，如此類推。最後在 100 元紙幣完成。</div>
   <div id="footer-buttons">
     <button class="btn secondary" id="undo-btn" disabled>↩️ 撤銷</button>
     <button class="btn" id="restart-btn">🔄 重新開始</button>
@@ -607,7 +607,7 @@ function undo() {
 
   if (state.connections.length < TARGET_CONNECTIONS) {
     document.getElementById("finish-popup").classList.remove("show");
-    document.getElementById("hint").textContent = "💡 由 1 元硬幣開始，畫一條線由 1 元硬幣之後到 10 元紙幣，然後到 2 元硬幣，如此類推。最後在 100 元紙幣完成。";
+    document.getElementById("hint").textContent = "💡 由 1 元硬幣開始，畫一條線到 10 元紙幣，然後到 2 元硬幣，如此類推。最後在 100 元紙幣完成。";
   }
 }
 
@@ -615,7 +615,7 @@ function restart() {
   document.querySelectorAll(".coin").forEach(el => el.remove());
   document.getElementById("lines-layer").innerHTML = "";
   document.getElementById("finish-popup").classList.remove("show");
-  document.getElementById("hint").textContent = "💡 由 1 元硬幣開始，畫一條線由 1 元硬幣之後到 10 元紙幣，然後到 2 元硬幣，如此類推。最後在 100 元紙幣完成。";
+  document.getElementById("hint").textContent = "💡 由 1 元硬幣開始，畫一條線到 10 元紙幣，然後到 2 元硬幣，如此類推。最後在 100 元紙幣完成。";
 
   state = {
     items: [], connections: [], undoCount: 0,
