@@ -87,7 +87,7 @@
   #footer {
     position: fixed;
     bottom: 0; left: 0; right: 0;
-    padding: 10px 14px;
+    padding: 14px 18px;
     background: linear-gradient(180deg,
       rgba(245, 230, 200, 0.94) 0%,
       rgba(232, 212, 168, 0.98) 100%);
@@ -96,31 +96,31 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
-    gap: 8px;
+    gap: 10px;
     z-index: 200;
     flex-wrap: wrap;
   }
 
   #hint {
-    font-size: 13px;
+    font-size: 18px;
     font-weight: 700;
     color: #7A1F1F;
     flex: 1;
-    min-width: 100px;
-    line-height: 1.3;
+    min-width: 120px;
+    line-height: 1.4;
   }
 
   .btn {
     font-family: inherit;
-    font-size: 13px;
+    font-size: 18px;
     font-weight: 900;
-    padding: 8px 14px;
+    padding: 12px 20px;
     border: 3px solid #5A1515;
     border-radius: 10px;
     background: linear-gradient(180deg, #A83232 0%, #7A1F1F 100%);
     color: #F5E6C8;
     cursor: pointer;
-    min-width: 70px;
+    min-width: 90px;
     box-shadow: 0 3px 0 #5A1515;
   }
 
@@ -188,16 +188,16 @@
   }
 
   @media (max-width: 600px) {
-    #hint { font-size: 11px; }
-    .btn { font-size: 11px; padding: 6px 10px; min-width: 55px; }
-    #footer { padding: 6px 8px; gap: 5px; }
+    #hint { font-size: 14px; }
+    .btn { font-size: 14px; padding: 10px 16px; min-width: 75px; }
+    #footer { padding: 8px 10px; gap: 6px; }
     #finish-card h2 { font-size: 32px; }
     #finish-card p { font-size: 18px; }
   }
 
   @media (max-width: 400px) {
-    #hint { font-size: 10px; }
-    .btn { font-size: 10px; padding: 5px 8px; min-width: 50px; }
+    #hint { font-size: 12px; }
+    .btn { font-size: 12px; padding: 8px 12px; min-width: 65px; }
     #finish-card { padding: 24px 28px; }
     #finish-card h2 { font-size: 26px; }
     #finish-card p { font-size: 16px; }
@@ -254,13 +254,13 @@ function getSizes() {
   const w = window.innerWidth;
   let coinSize, billW, billH, footerH;
   if (w < 400) {
-    coinSize = 55; billW = 78; billH = 50; footerH = 90;
+    coinSize = 55; billW = 78; billH = 50; footerH = 120;
   } else if (w < 600) {
-    coinSize = 65; billW = 92; billH = 60; footerH = 100;
+    coinSize = 65; billW = 92; billH = 60; footerH = 130;
   } else if (w < 900) {
-    coinSize = 80; billW = 110; billH = 70; footerH = 115;
+    coinSize = 80; billW = 110; billH = 70; footerH = 140;
   } else {
-    coinSize = 95; billW = 130; billH = 82; footerH = 130;
+    coinSize = 95; billW = 130; billH = 82; footerH = 150;
   }
   return { coinSize, billW, billH, footerH };
 }
