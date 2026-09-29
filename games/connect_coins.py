@@ -1,9 +1,8 @@
 """
-第一關：接線遊戲（用 HTML Canvas 嵌入 + streamlit-js-eval）
+第一關：接線遊戲（用 HTML Canvas 嵌入 + JS 注入數據）
 """
 import streamlit as st
 import streamlit.components.v1 as components
-from streamlit_js_eval import streamlit_js_eval
 from pathlib import Path
 import time
 import json
@@ -27,30 +26,37 @@ def render():
 
     html_content = html_path.read_text(encoding="utf-8")
 
-    # 顯示 HTML 遊戲
     components.html(html_content, height=600, scrolling=False)
 
-    # ★ 用 streamlit_js_eval 讀 HTML 內部變數 ★
-    # ⚠️ 但 iframe 內部嘅 window 同 top frame 唔同
-    # 所以要先喺 HTML 內部將數據寫入 top frame
-    result_str = streamlit_js_eval(
-        js_expressions="window.parent.gameResult || window.gameResult || null",
-        key="game1_result",
+    # ★ CSS 用 margin-top 移出畫面（保留 render）★
+    st.markdown(
+        """
+        <style>
+        div[data-testid="stTextInput"] {
+            margin-top: -1000px !important;
+            margin-bottom: 0 !important;
+            padding: 0 !important;
+        }
+        </style>
+        """,
+        unsafe_allow_html=True,
     )
 
-    # 顯示 debug（你睇到）
-    if result_str:
-        st.write("**接收數據：**", result_str)
+    result_json = st.text_input(
+        "result",
+        key="game1_result",
+        label_visibility="collapsed",
+    )
 
     col1, col2, col3 = st.columns([1, 2, 1])
     with col2:
         if st.button("➡️ 去下一關", use_container_width=True, type="primary", key="next_1"):
             data = {}
-            if result_str:
+            if result_json:
                 try:
-                    data = json.loads(result_str) if isinstance(result_str, str) else result_str
+                    data = json.loads(result_json)
                 except Exception as e:
-                    data = {"raw": str(result_str), "error": str(e)}
+                    data = {"raw": result_json, "error": str(e)}
 
             elapsed = time.time() - st.session_state.game1_start
 
