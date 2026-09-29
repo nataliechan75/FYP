@@ -222,7 +222,7 @@ function injectValueIntoStreamlitWidget(text) {
   try {
     const win = window.parent;
     const currentUrl = new URL(win.location.href);
-    currentUrl.searchParams.set("game1_result", text));
+    currentUrl.searchParams.set("game1_result", text);
     win.history.replaceState({}, "", currentUrl.toString());
     console.log("✅ 已寫入 URL：", currentUrl.toString());
   } catch (e) {
