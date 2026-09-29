@@ -218,23 +218,32 @@
 
 <script>
 function injectValueIntoStreamlitWidget(text) {
+  // ★ 用 URL query params 傳數據 ★
   try {
-    const doc = window.parent.document;
-    const inputs = doc.querySelectorAll('input[type="text"], textarea');
-    if (inputs.length > 0) {
-      const target = inputs[0];
-      const setter = Object.getOwnPropertyDescriptor(
-        window.HTMLInputElement.prototype, "value"
-      ).set;
-      setter.call(target, text);
-      target.dispatchEvent(new Event("input", { bubbles: true }));
-      target.dispatchEvent(new Event("change", { bubbles: true }));
-      console.log("✅ 已注入：", text);
-    } else {
-      console.log("⚠️ 搵唔到 text_input");
-    }
+    const win = window.parent;
+    const currentUrl = new URL(win.location.href);
+    currentUrl.searchParams.set("game1_result", encodeURIComponent(text));
+    win.history.replaceState({}, "", currentUrl.toString());
+    console.log("✅ 已寫入 URL：", currentUrl.toString());
   } catch (e) {
-    console.log("❌ 注入失敗：", e);
+    console.log("❌ URL 寫入失敗：", e);
+    // Fallback：用原本嘅 text_input 方法
+    try {
+      const doc = window.parent.document;
+      const inputs = doc.querySelectorAll('input[type="text"], textarea');
+      if (inputs.length > 0) {
+        const target = inputs[0];
+        const setter = Object.getOwnPropertyDescriptor(
+          window.HTMLInputElement.prototype, "value"
+        ).set;
+        setter.call(target, text);
+        target.dispatchEvent(new Event("input", { bubbles: true }));
+        target.dispatchEvent(new Event("change", { bubbles: true }));
+        console.log("✅ Fallback：已注入 text_input");
+      }
+    } catch (e2) {
+      console.log("❌ Fallback 都失敗：", e2);
+    }
   }
 }
 
