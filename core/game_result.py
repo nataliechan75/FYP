@@ -1,11 +1,11 @@
 """
-遊戲結果讀取 + AI 評分 helper
-Mistral 優先，Gemini fallback
+遊戲結果讀取 + AI 評分 helper（Gemini 多 model 輪流）
 """
 import json
 import base64
 import time
 import streamlit as st
+import google.generativeai as genai
 
 
 # ═══════════════════════════════════════════
@@ -53,64 +53,42 @@ CUBE_PROMPT = """
 """
 
 
+# ★ 輪流試呢幾個 model（quota 分開計）
+GEMINI_MODELS = [
+    "gemini-3.8-flash",       # 你而家用緊
+    "gemini-2.5-flash",
+    "gemini-2.0-flash",
+    "gemini-2.5-flash-lite",
+]
+
+
 def _data_url_to_bytes(data_url: str):
     header, b64 = data_url.split(",", 1)
     mime = header.split(";")[0].replace("data:", "")
     return mime, base64.b64decode(b64)
 
 
-# ═══════════════════════════════════════════
-# Mistral（香港可用、免費 tier）
-# ═══════════════════════════════════════════
-def _score_with_mistral(image_data_url: str) -> dict:
-    from mistralai import Mistral
-
-    client = Mistral(api_key=st.secrets["MISTRAL_API_KEY"])
-
-    resp = client.chat.complete(
-        model="pixtral-12b-2409",
-        messages=[{
-            "role": "user",
-            "content": [
-                {"type": "text", "text": CUBE_PROMPT},
-                {"type": "image_url",
-                 "image_url": {"url": image_data_url}},
-            ],
-        }],
-        response_format={"type": "json_object"},
-        temperature=0,
-    )
-
-    text = resp.choices[0].message.content.strip()
-    if text.startswith("```"):
-        text = text.strip("`")
-        if text.startswith("json"):
-            text = text[4:]
-        text = text.strip()
-
-    result = json.loads(text)
-    result["_model_used"] = "mistral-pixtral-12b"
-    return result
-
-
-# ═══════════════════════════════════════════
-# Gemini（fallback）
-# ═══════════════════════════════════════════
-def _score_with_gemini(image_data_url: str) -> dict:
-    import google.generativeai as genai
-
-    genai.configure(api_key=st.secrets["GEMINI_API_KEY"])
-
-    MODELS = [
-        "gemini-2.5-flash",
-        "gemini-2.0-flash",
-        "gemini-2.5-flash-lite",
-    ]
+def score_cube_with_ai(image_data_url: str) -> dict:
+    """
+    輪流試多個 Gemini model，邊個唔爆就用邊個。
+    """
+    try:
+        genai.configure(api_key=st.secrets["GEMINI_API_KEY"])
+    except Exception as e:
+        st.warning(f"⚠️ GEMINI_API_KEY 未設定：{e}")
+        return {
+            "score": 0,
+            "conditions": {},
+            "reasons": ["GEMINI_API_KEY 未設定"],
+            "reason": str(e),
+        }
 
     mime, img_bytes = _data_url_to_bytes(image_data_url)
-    last_error = None
 
-    for model_name in MODELS:
+    last_error = None
+    tried = []
+
+    for model_name in GEMINI_MODELS:
         try:
             model = genai.GenerativeModel(model_name)
             response = model.generate_content(
@@ -120,6 +98,7 @@ def _score_with_gemini(image_data_url: str) -> dict:
                     "response_mime_type": "application/json",
                 },
             )
+
             text = response.text.strip()
             if text.startswith("```"):
                 text = text.strip("`")
@@ -134,40 +113,21 @@ def _score_with_gemini(image_data_url: str) -> dict:
         except Exception as e:
             last_error = e
             err = str(e)
-            if "429" in err or "404" in err:
+
+            if "429" in err:
+                tried.append(f"{model_name}: 429 爆 quota")
                 continue
-            raise
+            elif "404" in err:
+                tried.append(f"{model_name}: 404 唔支援")
+                continue
+            else:
+                tried.append(f"{model_name}: {type(e).__name__}")
+                continue
 
-    raise last_error
-
-
-# ═══════════════════════════════════════════
-# 主入口：Mistral 優先，Gemini fallback
-# ═══════════════════════════════════════════
-def score_cube_with_ai(image_data_url: str) -> dict:
-    """
-    先試 Mistral（香港可用、快）
-    Mistral 爆 → 試 Gemini
-    兩個都爆 → 返回失敗
-    """
-    # ★ 試 Mistral
-    if "MISTRAL_API_KEY" in st.secrets:
-        try:
-            return _score_with_mistral(image_data_url)
-        except Exception as e:
-            st.info(f"⏳ Mistral 忙碌，試 Gemini...")
-
-    # ★ Fallback：Gemini
-    if "GEMINI_API_KEY" in st.secrets:
-        try:
-            return _score_with_gemini(image_data_url)
-        except Exception as e:
-            st.warning(f"⚠️ Gemini 都失敗：{e}")
-
-    # ★ 全部失敗
+    # 全部 model 都爆
     return {
         "score": 0,
         "conditions": {},
-        "reasons": ["所有 AI 都失敗"],
-        "reason": "所有 AI 都失敗",
+        "reasons": tried,
+        "reason": f"所有 model 都失敗。最後錯誤：{last_error}",
     }
