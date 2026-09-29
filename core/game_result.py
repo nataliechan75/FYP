@@ -1,5 +1,5 @@
 """
-遊戲結果讀取 + AI 評分 helper（Gemini 多 model 輪流）
+遊戲結果讀取 + AI 評分 helper（Gemini 新 model 輪流）
 """
 import json
 import base64
@@ -53,12 +53,12 @@ CUBE_PROMPT = """
 """
 
 
-# ★ 輪流試呢幾個 model（quota 分開計）
+# ★ 新 model 名（根據錯誤訊息 + 官方文檔）
 GEMINI_MODELS = [
-    "gemini-3.8-flash",       # 你而家用緊
-    "gemini-2.5-flash",
-    "gemini-2.0-flash",
-    "gemini-2.5-flash-lite",
+    "gemini-3.8-flash",        # 你而家用緊
+    "gemini-3.5-flash-lite",   # 錯誤訊息建議用呢個
+    "gemini-3.6-flash",        # 官方文檔提到
+    "gemini-3.5-flash",        # 官方文檔提到
 ]
 
 
@@ -70,16 +70,15 @@ def _data_url_to_bytes(data_url: str):
 
 def score_cube_with_ai(image_data_url: str) -> dict:
     """
-    輪流試多個 Gemini model，邊個唔爆就用邊個。
+    輪流試多個 Gemini 新 model，邊個唔爆就用邊個。
     """
     try:
         genai.configure(api_key=st.secrets["GEMINI_API_KEY"])
     except Exception as e:
-        st.warning(f"⚠️ GEMINI_API_KEY 未設定：{e}")
         return {
             "score": 0,
             "conditions": {},
-            "reasons": ["GEMINI_API_KEY 未設定"],
+            "reasons": [f"GEMINI_API_KEY 未設定：{e}"],
             "reason": str(e),
         }
 
@@ -116,13 +115,11 @@ def score_cube_with_ai(image_data_url: str) -> dict:
 
             if "429" in err:
                 tried.append(f"{model_name}: 429 爆 quota")
-                continue
             elif "404" in err:
                 tried.append(f"{model_name}: 404 唔支援")
-                continue
             else:
                 tried.append(f"{model_name}: {type(e).__name__}")
-                continue
+            continue
 
     # 全部 model 都爆
     return {
