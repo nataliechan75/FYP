@@ -1,5 +1,5 @@
 """
-第一關：接線遊戲
+第一關：接線遊戲（用 URL query params 傳數據）
 """
 import streamlit as st
 import streamlit.components.v1 as components
@@ -26,55 +26,46 @@ def render():
 
     html_content = html_path.read_text(encoding="utf-8")
 
-    # 1. 遊戲
+    # 顯示遊戲
     components.html(html_content, height=630, scrolling=False)
 
-    # 2. text_input
-    result_json = st.text_input(
-        "result",  # ← 冇 label_visibility
-        key="game1_result",
-    )
-
-    # 3. 完成按鈕
+    # 完成按鈕
     col1, col2, col3 = st.columns([1, 2, 1])
     with col2:
-        submitted = st.button(
+        if st.button(
             "➡️ 去下一關",
             use_container_width=True,
             type="primary",
             key="next_1",
-        )
+        ):
+            # ★ 讀 URL query params ★
+            data = {}
+            if "game1_result" in st.query_params:
+                try:
+                    result_str = st.query_params["game1_result"]
+                    data = json.loads(result_str)
+                    st.write("**DEBUG - 讀到嘅 data：**", data)
+                except Exception as e:
+                    st.error(f"❌ 讀取失敗：{e}")
+            else:
+                st.write("**DEBUG - 冇 query params**")
+                st.write("**DEBUG - 所有 query params：**", dict(st.query_params))
 
-    # 4. 提交
-    if submitted:
-        # ★ 用 session_state 攞最新值（唔靠 result_json 變數）★
-        latest_result = st.session_state.get("game1_result", "")
+            # 清走 query param
+            st.query_params.clear()
 
-        # DEBUG
-        st.write("**DEBUG - result_json 變數：**", repr(result_json))
-        st.write("**DEBUG - session_state 最新值：**", repr(latest_result))
+            elapsed = time.time() - st.session_state.game1_start
 
-        data = {}
-        if latest_result:
-            try:
-                data = json.loads(latest_result)
-            except Exception as e:
-                data = {"raw": latest_result, "error": str(e)}
+            st.session_state.scores["connect_coins"] = {
+                "total_time_sec": round(elapsed, 2),
+                "completed_at": time.strftime("%Y-%m-%d %H:%M:%S"),
+                "is_correct": data.get("is_correct", None),
+                "sequence": data.get("sequence", []),
+                "undo_count": data.get("undo_count", 0),
+                "has_crossing": data.get("has_crossing", None),
+                "is_order_correct": data.get("is_order_correct", None),
+                "score": 1 if data.get("is_correct") else 0,
+            }
 
-        st.write("**DEBUG - 解析後：**", data)
-
-        elapsed = time.time() - st.session_state.game1_start
-
-        st.session_state.scores["connect_coins"] = {
-            "total_time_sec": round(elapsed, 2),
-            "completed_at": time.strftime("%Y-%m-%d %H:%M:%S"),
-            "is_correct": data.get("is_correct", None),
-            "sequence": data.get("sequence", []),
-            "undo_count": data.get("undo_count", 0),
-            "has_crossing": data.get("has_crossing", None),
-            "is_order_correct": data.get("is_order_correct", None),
-            "score": 1 if data.get("is_correct") else 0,
-        }
-
-        from core.state import next_game
-        next_game()
+            from core.state import next_game
+            next_game()
