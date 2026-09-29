@@ -83,7 +83,7 @@
   }
 
   #footer {
-    position: fixed;
+    position: absolute;
     bottom: 0; left: 0; right: 0;
     padding: 14px 18px;
     background: linear-gradient(180deg,
@@ -591,7 +591,7 @@ function makeConnection(from, to, startTime) {
 
   if (state.connections.length === TARGET_CONNECTIONS) {
     document.getElementById("finish-popup").classList.add("show");
-    document.getElementById("hint").textContent = "✅ 完成啦！請向下 scroll 撳「➡️ 去下一關」";
+    document.getElementById("hint").textContent = "✅ 完成啦！請拉向下撳「➡️ 去下一關」";
 
     const seq = state.connections.map(c => c.from);
     seq.push(state.connections[state.connections.length - 1].to);
