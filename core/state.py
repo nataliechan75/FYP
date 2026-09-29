@@ -9,21 +9,21 @@ GAME_ORDER = ["intro", "connect_coins", "game2", "game3", "game4", "game5", "gam
 # 遊戲名（中文）
 GAME_NAMES = {
     "connect_coins": "接線遊戲",
-    "game2": "畫購物籃",
-    "game3": "畫時鐘",
-    "game4": "重複句子",
-    "game5": "講菜名",
-    "game6": "抽象概念",
+    "cube_copy": "畫購物籃",
+    "clock": "畫時鐘",
+    "sentence_repeat": "重複句子",
+    "naming": "講菜名",
+    "abstraction": "抽象概念",
 }
 
 # 每個遊戲嘅滿分
 GAME_MAX_SCORES = {
     "connect_coins": 1,
-    "game2": 1,
-    "game3": 3,
-    "game4": 2,
-    "game5": 1,
-    "game6": 2,
+    "cube_copy": 1,
+    "clock": 3,
+    "sentence_repeat": 2,
+    "naming": 1,
+    "abstraction": 2,
 }
 
 
