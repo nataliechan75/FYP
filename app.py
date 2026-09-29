@@ -92,6 +92,11 @@ elif current == "end":
 
         scores = st.session_state.get("scores", {})
 
+        # ★ DEBUG：顯示所有 key ★
+        st.write("**DEBUG - scores 入面有咩 key：**")
+        st.write(list(scores.keys()))
+        st.write("**DEBUG - 完整 scores：**")
+        st.json(scores)
         if not scores:
             st.info("冇數據")
         else:
