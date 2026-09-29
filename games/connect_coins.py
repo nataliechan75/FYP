@@ -1,5 +1,5 @@
 """
-第一關：接線遊戲（用 URL query params 傳數據）
+第一關：接線遊戲
 """
 import streamlit as st
 import streamlit.components.v1 as components
@@ -38,18 +38,17 @@ def render():
             type="primary",
             key="next_1",
         ):
-            # ★ 讀 URL query params ★
+            # ★ 檢查有冇完成（URL query params 只有完成時才有）★
+            skipped = True
             data = {}
+
             if "game1_result" in st.query_params:
                 try:
                     result_str = st.query_params["game1_result"]
                     data = json.loads(result_str)
-                    st.write("**DEBUG - 讀到嘅 data：**", data)
+                    skipped = False  # 有結果 → 玩家完成
                 except Exception as e:
                     st.error(f"❌ 讀取失敗：{e}")
-            else:
-                st.write("**DEBUG - 冇 query params**")
-                st.write("**DEBUG - 所有 query params：**", dict(st.query_params))
 
             # 清走 query param
             st.query_params.clear()
@@ -59,6 +58,7 @@ def render():
             st.session_state.scores["connect_coins"] = {
                 "total_time_sec": round(elapsed, 2),
                 "completed_at": time.strftime("%Y-%m-%d %H:%M:%S"),
+                "skipped": skipped,  # ★ 新增 ★
                 "is_correct": data.get("is_correct", None),
                 "sequence": data.get("sequence", []),
                 "undo_count": data.get("undo_count", 0),
