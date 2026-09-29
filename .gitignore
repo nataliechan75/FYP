@@ -1,6 +1,22 @@
+# Secrets - 千祈唔好 push！
 .streamlit/secrets.toml
+
+# Python
 __pycache__/
 *.pyc
+*.pyo
+*.pyd
 venv/
 .venv/
+env/
+
+# Streamlit
+.streamlit/*.log
+
+# OS
 .DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
