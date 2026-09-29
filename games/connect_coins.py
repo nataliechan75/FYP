@@ -1,5 +1,5 @@
 """
-第一關：接線遊戲（用 HTML Canvas 嵌入 + JS 注入數據）
+第一關：接線遊戲
 """
 import streamlit as st
 import streamlit.components.v1 as components
@@ -26,12 +26,17 @@ def render():
 
     html_content = html_path.read_text(encoding="utf-8")
 
-    # ★ 1. 遊戲（HTML iframe）★
+    # 1. 遊戲
     components.html(html_content, height=630, scrolling=False)
 
-    # ★ 2. 完成按鈕 ★
+    # 2. text_input（喺按鈕之前）
+    result_json = st.text_input(
+        "result (debug)",
+        key="game1_result",
+    )
+
+    # 3. 完成按鈕
     col1, col2, col3 = st.columns([1, 2, 1])
-    submitted = False
     with col2:
         submitted = st.button(
             "➡️ 去下一關",
@@ -40,14 +45,7 @@ def render():
             key="next_1",
         )
 
-    # ★ 3. text_input（最底）★
-    result_json = st.text_input(
-        "result",
-        key="game1_result",
-        label_visibility="collapsed",
-    )
-
-    # ★ 4. 處理提交 ★
+    # 4. 提交
     if submitted:
         data = {}
         if result_json:
