@@ -1,28 +1,38 @@
+"""
+遊戲 state 管理
+"""
 import streamlit as st
 
+# 遊戲順序
 GAME_ORDER = ["intro", "connect_coins", "game2", "game3", "game4", "game5", "game6", "end"]
 
-CORRECT_SEQUENCE = ["10¢", "$1", "20¢", "$2", "50¢", "$5", "$10"]
+# 遊戲名（中文）
+GAME_NAMES = {
+    "connect_coins": "接線遊戲",
+    "game2": "畫購物籃",
+    "game3": "畫時鐘",
+    "game4": "重複句子",
+    "game5": "講菜名",
+    "game6": "抽象概念",
+}
 
-COINS = {
-    "10¢": {"display": "一毫子",  "value": 0.10, "stall": "🥬 菜檔"},
-    "20¢": {"display": "兩毫子",  "value": 0.20, "stall": "🐟 魚檔"},
-    "50¢": {"display": "五毫子",  "value": 0.50, "stall": "🍜 麵檔"},
-    "$1":  {"display": "一蚊",    "value": 1.00, "stall": "🧺 豆腐檔"},
-    "$2":  {"display": "兩蚊",    "value": 2.00, "stall": "⚖️ 豬肉檔"},
-    "$5":  {"display": "五蚊",    "value": 5.00, "stall": "🍗 燒味檔"},
-    "$10": {"display": "十蚊",    "value": 10.00,"stall": "🏮 雜貨檔"},
+# 每個遊戲嘅滿分
+GAME_MAX_SCORES = {
+    "connect_coins": 1,
+    "game2": 1,
+    "game3": 3,
+    "game4": 2,
+    "game5": 1,
+    "game6": 2,
 }
 
 
 def init_state():
     defaults = {
         "current_game": "intro",
-        "player_name": "",
+        "player_name": "訪客",
         "scores": {},
-        "connected": [],
-        "game_finished": False,
-        "attempts": 0,
+        "show_admin": False,
     }
     for k, v in defaults.items():
         if k not in st.session_state:
