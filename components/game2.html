@@ -276,10 +276,7 @@ window.addEventListener("resize", resizeCanvas);
 // ═══════════════════════════════════════════
 function getPos(e) {
   const rect = canvas.getBoundingClientRect();
-  return {
-    x: e.clientX - rect.left,
-    y: e.clientY - rect.top,
-  };
+  return { x: e.clientX - rect.left, y: e.clientY - rect.top };
 }
 
 function startDraw(e) {
@@ -359,7 +356,7 @@ function injectValueIntoStreamlitWidget(text) {
 }
 
 // ═══════════════════════════════════════════
-// 壓縮 canvas（減細 base64）
+// 壓縮 canvas
 // ═══════════════════════════════════════════
 function compressCanvas(canvas, maxW = 400) {
   const scale = Math.min(1, maxW / canvas.width);
@@ -367,7 +364,6 @@ function compressCanvas(canvas, maxW = 400) {
   tmp.width = Math.round(canvas.width * scale);
   tmp.height = Math.round(canvas.height * scale);
   const tctx = tmp.getContext("2d");
-  // 白底，AI 睇得清楚啲
   tctx.fillStyle = "#FFFFFF";
   tctx.fillRect(0, 0, tmp.width, tmp.height);
   tctx.drawImage(canvas, 0, 0, tmp.width, tmp.height);
@@ -382,7 +378,6 @@ document.getElementById("done-btn").addEventListener("click", () => {
   document.getElementById("player-img").src = dataURL;
   document.getElementById("done-panel").classList.add("show");
 
-  // ★ 壓縮後傳去 Streamlit
   const compressed = compressCanvas(canvas, 400);
 
   const result = {
@@ -390,7 +385,7 @@ document.getElementById("done-btn").addEventListener("click", () => {
     completed: true,
     stroke_count: strokes.length,
     total_points: strokes.reduce((sum, s) => sum + s.length, 0),
-    image: compressed,           // ★ base64 JPEG
+    image: compressed,
   };
 
   console.log("=== 遊戲結果（已傳出）===");
