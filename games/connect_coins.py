@@ -1,8 +1,9 @@
 """
-第一關：接線遊戲（用 HTML Canvas 嵌入 + JS 注入數據）
+第一關：接線遊戲（用 HTML Canvas 嵌入 + streamlit-js-eval）
 """
 import streamlit as st
 import streamlit.components.v1 as components
+from streamlit_js_eval import streamlit_js_eval
 from pathlib import Path
 import time
 import json
@@ -29,28 +30,30 @@ def render():
     # 顯示 HTML 遊戲
     components.html(html_content, height=600, scrolling=False)
 
-    # ★ text_input 接收 HTML 注入嘅數據 ★
-    result_json = st.text_input(
-        "result",
+    # ★ 用 streamlit_js_eval 讀 HTML 內部變數 ★
+    # ⚠️ 但 iframe 內部嘅 window 同 top frame 唔同
+    # 所以要先喺 HTML 內部將數據寫入 top frame
+    result_str = streamlit_js_eval(
+        js_expressions="window.parent.gameResult || window.gameResult || null",
         key="game1_result",
-        label_visibility="collapsed",
     )
 
-    # 完成按鈕
+    # 顯示 debug（你睇到）
+    if result_str:
+        st.write("**接收數據：**", result_str)
+
     col1, col2, col3 = st.columns([1, 2, 1])
     with col2:
         if st.button("➡️ 去下一關", use_container_width=True, type="primary", key="next_1"):
-            # 讀 HTML 注入嘅數據
             data = {}
-            if result_json:
+            if result_str:
                 try:
-                    data = json.loads(result_json)
+                    data = json.loads(result_str) if isinstance(result_str, str) else result_str
                 except Exception as e:
-                    data = {"raw": result_json, "error": str(e)}
+                    data = {"raw": str(result_str), "error": str(e)}
 
             elapsed = time.time() - st.session_state.game1_start
 
-            # 儲存數據
             st.session_state.scores["game1"] = {
                 "total_time_sec": round(elapsed, 2),
                 "completed_at": time.strftime("%Y-%m-%d %H:%M:%S"),
