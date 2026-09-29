@@ -1,12 +1,16 @@
 """
-遊戲結果讀取 + AI 評分 helper（Gemini 版）
+遊戲結果讀取 + AI 評分 helper
+Mistral 優先，Gemini fallback
 """
 import json
 import base64
+import time
 import streamlit as st
-import google.generativeai as genai
 
 
+# ═══════════════════════════════════════════
+# 讀取 URL query param
+# ═══════════════════════════════════════════
 def read_game_result(param_key: str):
     skipped = True
     data = {}
@@ -20,6 +24,9 @@ def read_game_result(param_key: str):
     return skipped, data
 
 
+# ═══════════════════════════════════════════
+# MoCA 立方體評分 prompt
+# ═══════════════════════════════════════════
 CUBE_PROMPT = """
 你係受過 MoCA（Montreal Cognitive Assessment）訓練嘅評分員。
 根據以下 4 個官方標準，評估呢個立方體圖：
@@ -52,38 +59,115 @@ def _data_url_to_bytes(data_url: str):
     return mime, base64.b64decode(b64)
 
 
-def score_cube_with_ai(image_data_url: str) -> dict:
-    try:
-        genai.configure(api_key=st.secrets["GEMINI_API_KEY"])
-        model = genai.GenerativeModel("gemini-2.5-flash")
+# ═══════════════════════════════════════════
+# Mistral（香港可用、免費 tier）
+# ═══════════════════════════════════════════
+def _score_with_mistral(image_data_url: str) -> dict:
+    from mistralai import Mistral
 
-        mime, img_bytes = _data_url_to_bytes(image_data_url)
+    client = Mistral(api_key=st.secrets["MISTRAL_API_KEY"])
 
-        response = model.generate_content(
-            [
-                CUBE_PROMPT,
-                {"mime_type": mime, "data": img_bytes},
+    resp = client.chat.complete(
+        model="pixtral-12b-2409",
+        messages=[{
+            "role": "user",
+            "content": [
+                {"type": "text", "text": CUBE_PROMPT},
+                {"type": "image_url",
+                 "image_url": {"url": image_data_url}},
             ],
-            generation_config={
-                "temperature": 0,
-                "response_mime_type": "application/json",
-            },
-        )
+        }],
+        response_format={"type": "json_object"},
+        temperature=0,
+    )
 
-        text = response.text.strip()
-        if text.startswith("```"):
-            text = text.strip("`")
-            if text.startswith("json"):
-                text = text[4:]
-            text = text.strip()
+    text = resp.choices[0].message.content.strip()
+    if text.startswith("```"):
+        text = text.strip("`")
+        if text.startswith("json"):
+            text = text[4:]
+        text = text.strip()
 
-        return json.loads(text)
+    result = json.loads(text)
+    result["_model_used"] = "mistral-pixtral-12b"
+    return result
 
-    except Exception as e:
-        st.warning(f"⚠️ Gemini 判斷失敗：{e}")
-        return {
-            "score": 0,
-            "conditions": {},
-            "reasons": ["AI 判斷失敗"],
-            "reason": str(e),
-        }
+
+# ═══════════════════════════════════════════
+# Gemini（fallback）
+# ═══════════════════════════════════════════
+def _score_with_gemini(image_data_url: str) -> dict:
+    import google.generativeai as genai
+
+    genai.configure(api_key=st.secrets["GEMINI_API_KEY"])
+
+    MODELS = [
+        "gemini-2.5-flash",
+        "gemini-2.0-flash",
+        "gemini-2.5-flash-lite",
+    ]
+
+    mime, img_bytes = _data_url_to_bytes(image_data_url)
+    last_error = None
+
+    for model_name in MODELS:
+        try:
+            model = genai.GenerativeModel(model_name)
+            response = model.generate_content(
+                [CUBE_PROMPT, {"mime_type": mime, "data": img_bytes}],
+                generation_config={
+                    "temperature": 0,
+                    "response_mime_type": "application/json",
+                },
+            )
+            text = response.text.strip()
+            if text.startswith("```"):
+                text = text.strip("`")
+                if text.startswith("json"):
+                    text = text[4:]
+                text = text.strip()
+
+            result = json.loads(text)
+            result["_model_used"] = model_name
+            return result
+
+        except Exception as e:
+            last_error = e
+            err = str(e)
+            if "429" in err or "404" in err:
+                continue
+            raise
+
+    raise last_error
+
+
+# ═══════════════════════════════════════════
+# 主入口：Mistral 優先，Gemini fallback
+# ═══════════════════════════════════════════
+def score_cube_with_ai(image_data_url: str) -> dict:
+    """
+    先試 Mistral（香港可用、快）
+    Mistral 爆 → 試 Gemini
+    兩個都爆 → 返回失敗
+    """
+    # ★ 試 Mistral
+    if "MISTRAL_API_KEY" in st.secrets:
+        try:
+            return _score_with_mistral(image_data_url)
+        except Exception as e:
+            st.info(f"⏳ Mistral 忙碌，試 Gemini...")
+
+    # ★ Fallback：Gemini
+    if "GEMINI_API_KEY" in st.secrets:
+        try:
+            return _score_with_gemini(image_data_url)
+        except Exception as e:
+            st.warning(f"⚠️ Gemini 都失敗：{e}")
+
+    # ★ 全部失敗
+    return {
+        "score": 0,
+        "conditions": {},
+        "reasons": ["所有 AI 都失敗"],
+        "reason": "所有 AI 都失敗",
+    }
