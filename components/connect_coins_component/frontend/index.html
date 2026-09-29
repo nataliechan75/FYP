@@ -219,7 +219,7 @@
 </div>
 
 <script>
- // ═══════════════════════════════════════════
+// ═══════════════════════════════════════════
 // ★ 注入數據落 Streamlit text_input ★
 // ═══════════════════════════════════════════
 function injectValueIntoStreamlitWidget(text) {
@@ -272,6 +272,7 @@ const COIN_SIZE = 65;
 const BILL_W = 90;
 const BILL_H = 58;
 const FOOTER_H = 170;
+const CENTER_RATIO = 0.75;
 
 function getSizes() {
   return {
@@ -322,7 +323,6 @@ function isInsideItem(px, py, item) {
   return Math.hypot(px - c.x, py - c.y) <= r;
 }
 
-// ★ 檢查新線會唔會同現有線交叉（只記錄，唔阻止）★
 function willCrossExisting(from, to) {
   const a = itemCenter(from);
   const b = itemCenter(to);
@@ -342,7 +342,13 @@ function willCrossExisting(from, to) {
   return false;
 }
 
+// ★ 集中範圍 layout ★
 function generateLayout(W, H) {
+  const effW = W * CENTER_RATIO;
+  const effH = H * CENTER_RATIO;
+  const offsetX = (W - effW) / 2;
+  const offsetY = (H - effH) / 2;
+
   for (let attempt = 0; attempt < 2000; attempt++) {
     const placed = [];
     let ok = true;
@@ -351,12 +357,12 @@ function generateLayout(W, H) {
       const item = ITEMS[i];
       const size = getItemSize(item);
       let x, y, tries = 0, found = false;
-      const minDist = Math.max(size.w, size.h) + 10;
+      const minDist = Math.max(size.w, size.h) + 15;
 
       while (tries < 300) {
         const margin = 15;
-        x = size.w / 2 + margin + Math.random() * (W - size.w - margin * 2);
-        y = size.h / 2 + margin + Math.random() * (H - size.h - margin * 2);
+        x = offsetX + size.w / 2 + margin + Math.random() * (effW - size.w - margin * 2);
+        y = offsetY + size.h / 2 + margin + Math.random() * (effH - size.h - margin * 2);
 
         const conflict = placed.some(p => {
           const dx = p.x - x;
@@ -393,8 +399,8 @@ function generateLayout(W, H) {
   for (let row = 0; row < 3; row++) {
     for (let col = 0; col < 3; col++) {
       GRID.push({
-        x: W * 0.18 + col * W * 0.32,
-        y: H * 0.18 + row * H * 0.32,
+        x: offsetX + effW * 0.18 + col * effW * 0.32,
+        y: offsetY + effH * 0.18 + row * effH * 0.32,
       });
     }
   }
@@ -559,7 +565,6 @@ function onPointerMove(e) {
   line.setAttribute("x2", e.clientX);
   line.setAttribute("y2", e.clientY);
 
-  // ★ 冇 hint：只顯示金色光暈（唔理交叉）★
   state.items.forEach(item => {
     item.el.classList.remove("highlight");
     if (!item.connectedTo && item !== state.dragging &&
@@ -584,7 +589,6 @@ function onPointerUp(e) {
   );
 
   if (target) {
-    // ★ 照連（唔理交叉）★
     makeConnection(from, target, state.dragStart);
   }
 
@@ -600,10 +604,10 @@ function makeConnection(from, to, startTime) {
   const b = itemCenter(to);
   const time = (performance.now() - startTime) / 1000;
 
-  // ★ 記錄呢條線有冇交叉 ★
   const crosses = willCrossExisting(from, to);
 
-  const SEG = 6, JIT = 2;
+  // ★ 更多段 + 更多抖動（手繪感）★
+  const SEG = 12, JIT = 4;
   const pts = [];
   for (let i = 0; i <= SEG; i++) {
     const t = i / SEG;
@@ -617,7 +621,8 @@ function makeConnection(from, to, startTime) {
   }
   const d = "M " + pts.map(p => `${p[0]} ${p[1]}`).join(" L ");
 
-  [["#D4A017", 10, .25], ["#5A1515", 7, .85], ["#A83232", 4, 1]]
+  // ★ 線更粗 ★
+  [["#D4A017", 12, .3], ["#5A1515", 9, .85], ["#A83232", 5, 1]]
     .forEach(([color, w, op]) => {
       const p = document.createElementNS("http://www.w3.org/2000/svg", "path");
       p.setAttribute("d", d);
@@ -642,14 +647,11 @@ function makeConnection(from, to, startTime) {
     document.getElementById("finish-popup").classList.add("show");
     document.getElementById("hint").textContent = "✅ 完成啦！請向下 scroll 撳「➡️ 去下一關」";
 
-    // ★ 計算結果 ★
     const seq = state.connections.map(c => c.from);
     seq.push(state.connections[state.connections.length - 1].to);
 
     const isOrderCorrect = JSON.stringify(seq) === JSON.stringify(CORRECT_SEQUENCE);
     const hasCrossing = state.connections.some(c => c.crosses);
-
-    // ★ 順序啱 + 冇交叉 = is_correct ★
     const isCorrect = isOrderCorrect && !hasCrossing;
 
     const resultData = {
@@ -663,20 +665,7 @@ function makeConnection(from, to, startTime) {
     console.log("=== 遊戲結果 ===");
     console.log(JSON.stringify(resultData, null, 2));
 
-    // ★ 寫入 window（畀 streamlit_js_eval 讀）★
-try {
-    // 寫入 iframe 自己嘅 window
-    window.gameResult = resultData;
-    
-    // 寫入 parent（top frame）
-    if (window.parent && window.parent !== window) {
-        window.parent.gameResult = resultData;
-    }
-    
-    console.log("✅ 已寫入 window.gameResult");
-} catch (e) {
-    console.log("❌ 寫入失敗：", e);
-}
+    injectValueIntoStreamlitWidget(JSON.stringify(resultData));
   }
 }
 
