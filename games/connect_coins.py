@@ -31,7 +31,7 @@ def render():
 
     # 2. text_input
     result_json = st.text_input(
-        "result (debug)",
+        "result",  # ← 冇 label_visibility
         key="game1_result",
     )
 
