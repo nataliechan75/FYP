@@ -58,7 +58,7 @@ def render():
 
         elapsed = time.time() - st.session_state.game1_start
 
-        st.session_state.scores["game1"] = {
+        st.session_state.scores["connect_coins"] = {
             "total_time_sec": round(elapsed, 2),
             "completed_at": time.strftime("%Y-%m-%d %H:%M:%S"),
             "is_correct": data.get("is_correct", None),
