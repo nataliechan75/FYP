@@ -55,7 +55,7 @@ def _data_url_to_bytes(data_url: str):
 def score_cube_with_ai(image_data_url: str) -> dict:
     try:
         genai.configure(api_key=st.secrets["GEMINI_API_KEY"])
-        model = genai.GenerativeModel("gemini-2.0-flash")
+        model = genai.GenerativeModel("gemini-3.8-flash")
 
         mime, img_bytes = _data_url_to_bytes(image_data_url)
 
