@@ -63,14 +63,12 @@
     transform: scale(1.15);
   }
 
-  /* ★ 已連線：金色光暈（明顯）★ */
   .coin.connected {
     filter: drop-shadow(0 0 14px rgba(255, 215, 0, 0.95))
             drop-shadow(0 0 24px rgba(255, 215, 0, 0.6))
             drop-shadow(0 3px 5px rgba(60, 30, 10, 0.35));
   }
 
-  /* ★ Hover：金色光暈（明顯）★ */
   .coin.highlight {
     filter: drop-shadow(0 0 16px rgba(255, 215, 0, 1))
             drop-shadow(0 0 28px rgba(255, 215, 0, 0.7))
@@ -266,7 +264,84 @@ const COIN_SIZE = 65;
 const BILL_W = 90;
 const BILL_H = 58;
 const FOOTER_H = 170;
-const CENTER_RATIO = 0.75;
+
+// ═══════════════════════════════════════════
+// ★ 6 個固定佈局（每個都保證正確順序唔重叠）★
+// ═══════════════════════════════════════════
+// 每個佈局：8 個 { id, x, y }，x / y 係 0-1 百分比
+const LAYOUTS = [
+  // 佈局 1：S 形（由左上開始）
+  [
+    { id: "1d",   x: 0.20, y: 0.18 },
+    { id: "10b",  x: 0.50, y: 0.18 },
+    { id: "2d",   x: 0.80, y: 0.28 },
+    { id: "20b",  x: 0.80, y: 0.52 },
+    { id: "5d",   x: 0.50, y: 0.62 },
+    { id: "50b",  x: 0.20, y: 0.52 },
+    { id: "10d",  x: 0.20, y: 0.78 },
+    { id: "100b", x: 0.50, y: 0.82 },
+  ],
+
+  // 佈局 2：Z 形
+  [
+    { id: "1d",   x: 0.18, y: 0.18 },
+    { id: "10b",  x: 0.50, y: 0.14 },
+    { id: "2d",   x: 0.82, y: 0.22 },
+    { id: "20b",  x: 0.82, y: 0.48 },
+    { id: "5d",   x: 0.50, y: 0.55 },
+    { id: "50b",  x: 0.18, y: 0.48 },
+    { id: "10d",  x: 0.18, y: 0.78 },
+    { id: "100b", x: 0.50, y: 0.85 },
+  ],
+
+  // 佈局 3：倒 S 形
+  [
+    { id: "1d",   x: 0.20, y: 0.20 },
+    { id: "10b",  x: 0.20, y: 0.48 },
+    { id: "2d",   x: 0.50, y: 0.55 },
+    { id: "20b",  x: 0.80, y: 0.48 },
+    { id: "5d",   x: 0.80, y: 0.22 },
+    { id: "50b",  x: 0.50, y: 0.15 },
+    { id: "10d",  x: 0.20, y: 0.80 },
+    { id: "100b", x: 0.50, y: 0.85 },
+  ],
+
+  // 佈局 4：左右交錯
+  [
+    { id: "1d",   x: 0.22, y: 0.18 },
+    { id: "10b",  x: 0.78, y: 0.20 },
+    { id: "2d",   x: 0.22, y: 0.42 },
+    { id: "20b",  x: 0.78, y: 0.44 },
+    { id: "5d",   x: 0.22, y: 0.62 },
+    { id: "50b",  x: 0.78, y: 0.64 },
+    { id: "10d",  x: 0.22, y: 0.82 },
+    { id: "100b", x: 0.78, y: 0.84 },
+  ],
+
+  // 佈局 5：弓形（向下方）
+  [
+    { id: "1d",   x: 0.20, y: 0.20 },
+    { id: "10b",  x: 0.50, y: 0.28 },
+    { id: "2d",   x: 0.80, y: 0.20 },
+    { id: "20b",  x: 0.85, y: 0.50 },
+    { id: "5d",   x: 0.50, y: 0.60 },
+    { id: "50b",  x: 0.15, y: 0.50 },
+    { id: "10d",  x: 0.20, y: 0.80 },
+    { id: "100b", x: 0.50, y: 0.85 },
+  ],
+
+  // 佈局 6：對角線
+  [
+    { id: "1d",   x: 0.15, y: 0.15 },
+    { id: "10b",  x: 0.35, y: 0.25 },
+    { id: "2d",   x: 0.55, y: 0.35 },
+    { id: "20b",  x: 0.75, y: 0.45 },
+    { id: "5d",   x: 0.80, y: 0.65 },
+    { id: "50b",  x: 0.60, y: 0.75 },
+    { id: "10d",  x: 0.35, y: 0.80 },
+    { id: "100b", x: 0.15, y: 0.80 },
+  ],
+];
 
 function getSizes() {
   return { coinSize: COIN_SIZE, billW: BILL_W, billH: BILL_H, footerH: FOOTER_H };
@@ -332,100 +407,29 @@ function willCrossExisting(from, to) {
   return false;
 }
 
+// ★ 用固定佈局 ★
 function generateLayout(W, H) {
-  const effW = W * CENTER_RATIO;
-  const effH = H * CENTER_RATIO;
-  const offsetX = (W - effW) / 2;
-  const offsetY = (H - effH) / 2;
+  const layout = LAYOUTS[Math.floor(Math.random() * LAYOUTS.length)];
+  const JITTER = 0.025;  // ±2.5% 隨機偏移
 
-  for (let attempt = 0; attempt < 2000; attempt++) {
-    const placed = [];
-    let ok = true;
-
-    for (let i = 0; i < ITEMS.length; i++) {
-      const item = ITEMS[i];
-      const size = getItemSize(item);
-      let x, y, tries = 0, found = false;
-      const minDist = Math.max(size.w, size.h) + 15;
-
-      while (tries < 300) {
-        const margin = 15;
-        x = offsetX + size.w / 2 + margin + Math.random() * (effW - size.w - margin * 2);
-        y = offsetY + size.h / 2 + margin + Math.random() * (effH - size.h - margin * 2);
-
-        const conflict = placed.some(p => {
-          const dx = p.x - x;
-          const dy = p.y - y;
-          return Math.hypot(dx, dy) < Math.max(minDist, p.minDist);
-        });
-
-        if (!conflict) { found = true; break; }
-        tries++;
-      }
-
-      if (!found) { ok = false; break; }
-      placed.push({ x, y, minDist });
-    }
-
-    if (!ok) continue;
-
-    const candidate = ITEMS.map((item, i) => {
-      const size = getItemSize(item);
-      return {
-        ...item,
-        w: size.w, h: size.h,
-        x: placed[i].x - size.w / 2,
-        y: placed[i].y - size.h / 2,
-        connectedFrom: false, connectedTo: false, el: null,
-      };
-    });
-
-    if (sequenceHasNoCrossing(candidate, CORRECT_SEQUENCE)) return candidate;
-  }
-
-  const GRID = [];
-  for (let row = 0; row < 3; row++) {
-    for (let col = 0; col < 3; col++) {
-      GRID.push({
-        x: offsetX + effW * 0.18 + col * effW * 0.32,
-        y: offsetY + effH * 0.18 + row * effH * 0.32,
-      });
-    }
-  }
-  const shuffled = [...GRID].sort(() => Math.random() - 0.5);
-  const chosen = shuffled.slice(0, 8);
-
-  return ITEMS.map((item, i) => {
+  return ITEMS.map(item => {
+    const slot = layout.find(s => s.id === item.id);
     const size = getItemSize(item);
+
+    const jx = (Math.random() - 0.5) * 2 * JITTER * W;
+    const jy = (Math.random() - 0.5) * 2 * JITTER * H;
+
+    const cx = slot.x * W + jx;
+    const cy = slot.y * H + jy;
+
     return {
       ...item,
       w: size.w, h: size.h,
-      x: chosen[i].x - size.w / 2,
-      y: chosen[i].y - size.h / 2,
+      x: cx - size.w / 2,
+      y: cy - size.h / 2,
       connectedFrom: false, connectedTo: false, el: null,
     };
   });
-}
-
-function sequenceHasNoCrossing(items, seq) {
-  const lines = [];
-  for (let i = 0; i < seq.length - 1; i++) {
-    const a = items.find(c => c.id === seq[i]);
-    const b = items.find(c => c.id === seq[i + 1]);
-    if (!a || !b) return false;
-    lines.push({ a: itemCenter(a), b: itemCenter(b) });
-  }
-
-  for (let i = 0; i < lines.length; i++) {
-    for (let j = i + 1; j < lines.length; j++) {
-      if (j === i + 1) continue;
-      if (segmentsIntersect(lines[i].a, lines[i].b, lines[j].a, lines[j].b)) {
-        return false;
-      }
-    }
-  }
-
-  return true;
 }
 
 function coinSvg(item) {
@@ -598,7 +602,6 @@ function makeConnection(from, to, startTime) {
   const time = (performance.now() - startTime) / 1000;
   const crosses = willCrossExisting(from, to);
 
-  // ★ 保留玩家畫嘅 live-path ★
   const livePath = document.getElementById("live-path");
   if (livePath) {
     livePath.id = "";
