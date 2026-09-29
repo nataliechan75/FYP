@@ -266,21 +266,21 @@ const BILL_H = 58;
 const FOOTER_H = 170;
 
 // ═══════════════════════════════════════════
-// ★ 基準佈局（根據你嘅截圖）★
+// ★ 基準佈局（更集中）★
 // ═══════════════════════════════════════════
 const BASE_LAYOUT = [
-  { id: "1d",   x: 0.18, y: 0.15 },  // $1 左上
-  { id: "10b",  x: 0.50, y: 0.13 },  // $10 上中
-  { id: "2d",   x: 0.82, y: 0.18 },  // $2 右上
-  { id: "50b",  x: 0.15, y: 0.42 },  // $50 左中
-  { id: "5d",   x: 0.55, y: 0.50 },  // $5 中間
-  { id: "20b",  x: 0.85, y: 0.42 },  // $20 右中
-  { id: "10d",  x: 0.15, y: 0.70 },  // $10硬 左下
-  { id: "100b", x: 0.55, y: 0.78 },  // $100 中下
+  { id: "1d",   x: 0.25, y: 0.18 },  // $1 左上
+  { id: "10b",  x: 0.50, y: 0.15 },  // $10 上中
+  { id: "2d",   x: 0.75, y: 0.20 },  // $2 右上
+  { id: "50b",  x: 0.22, y: 0.45 },  // $50 左中
+  { id: "5d",   x: 0.50, y: 0.48 },  // $5 中間
+  { id: "20b",  x: 0.78, y: 0.45 },  // $20 右中
+  { id: "10d",  x: 0.22, y: 0.72 },  // $10硬 左下
+  { id: "100b", x: 0.55, y: 0.75 },  // $100 中下
 ];
 
-// 每次 jitter ±7%
-const JITTER = 0.07;
+// ★ Jitter 縮細（5%）★
+const JITTER = 0.05;
 
 function getSizes() {
   return { coinSize: COIN_SIZE, billW: BILL_W, billH: BILL_H, footerH: FOOTER_H };
@@ -346,7 +346,6 @@ function willCrossExisting(from, to) {
   return false;
 }
 
-// ★ 用基準佈局 + jitter ★
 function generateLayout(W, H) {
   for (let attempt = 0; attempt < 100; attempt++) {
     const candidate = ITEMS.map(item => {
@@ -368,11 +367,9 @@ function generateLayout(W, H) {
       };
     });
 
-    // 檢查正確順序唔交叉
     if (sequenceHasNoCrossing(candidate, CORRECT_SEQUENCE)) return candidate;
   }
 
-  // 唔 work → 用冇 jitter 嘅基準佈局
   return ITEMS.map(item => {
     const slot = BASE_LAYOUT.find(s => s.id === item.id);
     const size = getItemSize(item);
@@ -511,14 +508,15 @@ function onItemPointerDown(e) {
   const a = itemCenter(item);
   const layer = document.getElementById("lines-layer");
 
+  // ★ 線加粗返 ★
   const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
   path.setAttribute("d", `M ${a.x} ${a.y}`);
-  path.setAttribute("stroke", "#8B3A2B");
-  path.setAttribute("stroke-width", "3.5");
+  path.setAttribute("stroke", "#A83232");
+  path.setAttribute("stroke-width", "6");
   path.setAttribute("stroke-linecap", "round");
   path.setAttribute("stroke-linejoin", "round");
   path.setAttribute("fill", "none");
-  path.setAttribute("opacity", "0.7");
+  path.setAttribute("opacity", "0.9");
   path.id = "live-path";
   layer.appendChild(path);
 
