@@ -322,13 +322,12 @@ function isInsideItem(px, py, item) {
   return Math.hypot(px - c.x, py - c.y) <= r;
 }
 
-// ★ 檢查新線會唔會同現有線交叉 ★
+// ★ 檢查新線會唔會同現有線交叉（只記錄，唔阻止）★
 function willCrossExisting(from, to) {
   const a = itemCenter(from);
   const b = itemCenter(to);
 
   for (const conn of state.connections) {
-    // 跳過共享端點
     if (conn.from === from.id || conn.to === from.id) continue;
     if (conn.from === to.id || conn.to === to.id) continue;
 
@@ -492,6 +491,7 @@ function billSvg(item) {
     </svg>
   `;
 }
+
 function init() {
   SIZES = getSizes();
 
@@ -559,18 +559,12 @@ function onPointerMove(e) {
   line.setAttribute("x2", e.clientX);
   line.setAttribute("y2", e.clientY);
 
+  // ★ 冇 hint：只顯示金色光暈（唔理交叉）★
   state.items.forEach(item => {
     item.el.classList.remove("highlight");
-    item.el.classList.remove("crossing");
-
     if (!item.connectedTo && item !== state.dragging &&
         isInsideItem(e.clientX, e.clientY, item)) {
-      // ★ 檢查會唔會交叉 ★
-      if (willCrossExisting(state.dragging, item)) {
-        item.el.classList.add("crossing");  // 紅色 = 唔畀連
-      } else {
-        item.el.classList.add("highlight");  // 金色 = 可以連
-      }
+      item.el.classList.add("highlight");
     }
   });
 }
@@ -580,10 +574,7 @@ function onPointerUp(e) {
   if (!from) return;
 
   from.el.classList.remove("dragging");
-  state.items.forEach(item => {
-    item.el.classList.remove("highlight");
-    item.el.classList.remove("crossing");
-  });
+  state.items.forEach(item => item.el.classList.remove("highlight"));
 
   const ghost = document.getElementById("ghost");
   if (ghost) ghost.remove();
@@ -593,11 +584,8 @@ function onPointerUp(e) {
   );
 
   if (target) {
-    // ★ 檢查會唔會交叉 ★
-    if (!willCrossExisting(from, target)) {
-      makeConnection(from, target, state.dragStart);
-    }
-    // 如果會交叉 → 唔連
+    // ★ 照連（唔理交叉）★
+    makeConnection(from, target, state.dragStart);
   }
 
   state.dragging = null;
@@ -611,6 +599,9 @@ function makeConnection(from, to, startTime) {
   const a = itemCenter(from);
   const b = itemCenter(to);
   const time = (performance.now() - startTime) / 1000;
+
+  // ★ 記錄呢條線有冇交叉 ★
+  const crosses = willCrossExisting(from, to);
 
   const SEG = 6, JIT = 2;
   const pts = [];
@@ -639,7 +630,7 @@ function makeConnection(from, to, startTime) {
       layer.appendChild(p);
     });
 
-  state.connections.push({ from: from.id, to: to.id, time });
+  state.connections.push({ from: from.id, to: to.id, time, crosses });
   from.connectedFrom = true;
   to.connectedTo = true;
   from.el.classList.add("connected");
@@ -651,16 +642,22 @@ function makeConnection(from, to, startTime) {
     document.getElementById("finish-popup").classList.add("show");
     document.getElementById("hint").textContent = "✅ 完成啦！請向下 scroll 撳「➡️ 去下一關」";
 
-    // ★ 注入數據（喺 if 入面，只執行一次）★
+    // ★ 計算結果 ★
     const seq = state.connections.map(c => c.from);
     seq.push(state.connections[state.connections.length - 1].to);
 
-    const isCorrect = JSON.stringify(seq) === JSON.stringify(CORRECT_SEQUENCE);
+    const isOrderCorrect = JSON.stringify(seq) === JSON.stringify(CORRECT_SEQUENCE);
+    const hasCrossing = state.connections.some(c => c.crosses);
+
+    // ★ 順序啱 + 冇交叉 = is_correct ★
+    const isCorrect = isOrderCorrect && !hasCrossing;
 
     const resultData = {
       is_correct: isCorrect,
       sequence: seq,
       undo_count: state.undoCount,
+      has_crossing: hasCrossing,
+      is_order_correct: isOrderCorrect,
     };
 
     console.log("=== 遊戲結果 ===");
