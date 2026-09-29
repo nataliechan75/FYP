@@ -29,7 +29,7 @@ def render():
     # 1. 遊戲
     components.html(html_content, height=630, scrolling=False)
 
-    # 2. text_input（喺按鈕之前）
+    # 2. text_input
     result_json = st.text_input(
         "result (debug)",
         key="game1_result",
@@ -47,12 +47,21 @@ def render():
 
     # 4. 提交
     if submitted:
+        # ★ 用 session_state 攞最新值（唔靠 result_json 變數）★
+        latest_result = st.session_state.get("game1_result", "")
+
+        # DEBUG
+        st.write("**DEBUG - result_json 變數：**", repr(result_json))
+        st.write("**DEBUG - session_state 最新值：**", repr(latest_result))
+
         data = {}
-        if result_json:
+        if latest_result:
             try:
-                data = json.loads(result_json)
+                data = json.loads(latest_result)
             except Exception as e:
-                data = {"raw": result_json, "error": str(e)}
+                data = {"raw": latest_result, "error": str(e)}
+
+        st.write("**DEBUG - 解析後：**", data)
 
         elapsed = time.time() - st.session_state.game1_start
 
