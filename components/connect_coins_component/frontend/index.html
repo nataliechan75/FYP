@@ -63,14 +63,17 @@
     transform: scale(1.15);
   }
 
+  /* ★ 已連線：光暈更淡 ★ */
   .coin.connected {
-    filter: drop-shadow(0 0 12px rgba(212, 160, 23, 0.95))
-            drop-shadow(0 3px 5px rgba(60, 30, 10, 0.4));
+    filter: drop-shadow(0 0 8px rgba(212, 160, 23, 0.5))
+            drop-shadow(0 3px 5px rgba(60, 30, 10, 0.35));
   }
 
+  /* ★ Hover：光暈更淡 ★ */
   .coin.highlight {
-    filter: drop-shadow(0 0 16px rgba(212, 160, 23, 1));
-    transform: scale(1.1);
+    filter: drop-shadow(0 0 10px rgba(212, 160, 23, 0.6))
+            drop-shadow(0 3px 5px rgba(60, 30, 10, 0.35));
+    transform: scale(1.08);
   }
 
   .coin svg {
@@ -264,12 +267,7 @@ const FOOTER_H = 170;
 const CENTER_RATIO = 0.75;
 
 function getSizes() {
-  return {
-    coinSize: COIN_SIZE,
-    billW: BILL_W,
-    billH: BILL_H,
-    footerH: FOOTER_H,
-  };
+  return { coinSize: COIN_SIZE, billW: BILL_W, billH: BILL_H, footerH: FOOTER_H };
 }
 
 let SIZES = getSizes();
@@ -287,6 +285,7 @@ let state = {
   startTime: null,
   dragging: null,
   dragStart: null,
+  currentPath: null,
 };
 
 function cross(o, a, b) {
@@ -526,14 +525,39 @@ function onItemPointerDown(e) {
   state.dragging = item;
   state.dragStart = performance.now();
 
-  // ★ 冇 ghost-line！直接拖，唔顯示虛線 ★
+  state.currentPath = [];
+
+  const a = itemCenter(item);
+  const layer = document.getElementById("lines-layer");
+
+  const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
+  path.setAttribute("d", `M ${a.x} ${a.y}`);
+  path.setAttribute("stroke", "#A83232");
+  path.setAttribute("stroke-width", "7");
+  path.setAttribute("stroke-linecap", "round");
+  path.setAttribute("stroke-linejoin", "round");
+  path.setAttribute("fill", "none");
+  path.setAttribute("opacity", "1");
+  path.id = "live-path";
+  layer.appendChild(path);
+
+  state.currentPath.push([a.x, a.y]);
 
   document.addEventListener("pointermove", onPointerMove);
   document.addEventListener("pointerup", onPointerUp);
 }
 
 function onPointerMove(e) {
-  // ★ 只 highlight 目標，唔畫線 ★
+  if (state.dragging && state.currentPath) {
+    state.currentPath.push([e.clientX, e.clientY]);
+
+    const path = document.getElementById("live-path");
+    if (path) {
+      const d = "M " + state.currentPath.map(p => `${p[0]} ${p[1]}`).join(" L ");
+      path.setAttribute("d", d);
+    }
+  }
+
   state.items.forEach(item => {
     item.el.classList.remove("highlight");
     if (!item.connectedTo && item !== state.dragging &&
@@ -550,6 +574,9 @@ function onPointerUp(e) {
   from.el.classList.remove("dragging");
   state.items.forEach(item => item.el.classList.remove("highlight"));
 
+  const livePath = document.getElementById("live-path");
+  if (livePath) livePath.remove();
+
   const target = state.items.find(item =>
     !item.connectedTo && item !== from && isInsideItem(e.clientX, e.clientY, item)
   );
@@ -560,6 +587,7 @@ function onPointerUp(e) {
 
   state.dragging = null;
   state.dragStart = null;
+  state.currentPath = null;
   document.removeEventListener("pointermove", onPointerMove);
   document.removeEventListener("pointerup", onPointerUp);
 }
@@ -668,6 +696,7 @@ function restart() {
   state = {
     items: [], connections: [], undoCount: 0,
     startTime: null, dragging: null, dragStart: null,
+    currentPath: null,
   };
   init();
 }
