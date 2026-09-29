@@ -218,7 +218,6 @@
 
 <script>
 function injectValueIntoStreamlitWidget(text) {
-  // ★ 用 URL query params 傳數據 ★
   try {
     const win = window.parent;
     const currentUrl = new URL(win.location.href);
@@ -227,7 +226,6 @@ function injectValueIntoStreamlitWidget(text) {
     console.log("✅ 已寫入 URL：", currentUrl.toString());
   } catch (e) {
     console.log("❌ URL 寫入失敗：", e);
-    // Fallback：用原本嘅 text_input 方法
     try {
       const doc = window.parent.document;
       const inputs = doc.querySelectorAll('input[type="text"], textarea');
@@ -274,22 +272,17 @@ const BILL_W = 90;
 const BILL_H = 58;
 const FOOTER_H = 170;
 
-// ═══════════════════════════════════════════
-// ★ 基準佈局（更集中）★
-// ═══════════════════════════════════════════
-const BASE_LAYOUT = [
-  { id: "1d",   x: 0.25, y: 0.18 },  // $1 左上
-  { id: "10b",  x: 0.50, y: 0.15 },  // $10 上中
-  { id: "2d",   x: 0.75, y: 0.20 },  // $2 右上
-  { id: "50b",  x: 0.22, y: 0.45 },  // $50 左中
-  { id: "5d",   x: 0.50, y: 0.48 },  // $5 中間
-  { id: "20b",  x: 0.78, y: 0.45 },  // $20 右中
-  { id: "10d",  x: 0.22, y: 0.72 },  // $10硬 左下
-  { id: "100b", x: 0.55, y: 0.75 },  // $100 中下
+// Fallback 佈局（極少用）
+const FALLBACK_LAYOUT = [
+  { id: "1d",   x: 0.25, y: 0.18 },
+  { id: "10b",  x: 0.50, y: 0.15 },
+  { id: "2d",   x: 0.75, y: 0.20 },
+  { id: "50b",  x: 0.22, y: 0.45 },
+  { id: "5d",   x: 0.50, y: 0.48 },
+  { id: "20b",  x: 0.78, y: 0.45 },
+  { id: "10d",  x: 0.22, y: 0.72 },
+  { id: "100b", x: 0.55, y: 0.75 },
 ];
-
-// ★ Jitter 縮細（5%）★
-const JITTER = 0.05;
 
 function getSizes() {
   return { coinSize: COIN_SIZE, billW: BILL_W, billH: BILL_H, footerH: FOOTER_H };
@@ -355,32 +348,61 @@ function willCrossExisting(from, to) {
   return false;
 }
 
+// ═══════════════════════════════════════════
+// ★ 純隨機生成（唔用固定佈局）★
+// ═══════════════════════════════════════════
 function generateLayout(W, H) {
-  for (let attempt = 0; attempt < 100; attempt++) {
-    const candidate = ITEMS.map(item => {
-      const slot = BASE_LAYOUT.find(s => s.id === item.id);
+  for (let attempt = 0; attempt < 2000; attempt++) {
+    const placed = [];
+    let ok = true;
+
+    // 1. 隨機放置 8 個硬幣（唔重叠）
+    for (let i = 0; i < ITEMS.length; i++) {
+      const item = ITEMS[i];
       const size = getItemSize(item);
+      let x, y, tries = 0, found = false;
+      const minDist = Math.max(size.w, size.h) + 20;
 
-      const jx = (Math.random() - 0.5) * 2 * JITTER * W;
-      const jy = (Math.random() - 0.5) * 2 * JITTER * H;
+      while (tries < 200) {
+        const margin = 30;
+        x = size.w / 2 + margin + Math.random() * (W - size.w - margin * 2);
+        y = size.h / 2 + margin + Math.random() * (H - size.h - margin * 2);
 
-      const cx = slot.x * W + jx;
-      const cy = slot.y * H + jy;
+        const conflict = placed.some(p => {
+          const dx = p.x - x;
+          const dy = p.y - y;
+          return Math.hypot(dx, dy) < Math.max(minDist, p.minDist);
+        });
 
+        if (!conflict) { found = true; break; }
+        tries++;
+      }
+
+      if (!found) { ok = false; break; }
+      placed.push({ x, y, minDist });
+    }
+
+    if (!ok) continue;
+
+    // 2. 建立 candidate
+    const candidate = ITEMS.map((item, i) => {
+      const size = getItemSize(item);
       return {
         ...item,
         w: size.w, h: size.h,
-        x: cx - size.w / 2,
-        y: cy - size.h / 2,
+        x: placed[i].x - size.w / 2,
+        y: placed[i].y - size.h / 2,
         connectedFrom: false, connectedTo: false, el: null,
       };
     });
 
+    // 3. ★ 檢查正確順序唔交叉 ★
     if (sequenceHasNoCrossing(candidate, CORRECT_SEQUENCE)) return candidate;
   }
 
+  // Fallback：用固定佈局（極少發生）
   return ITEMS.map(item => {
-    const slot = BASE_LAYOUT.find(s => s.id === item.id);
+    const slot = FALLBACK_LAYOUT.find(s => s.id === item.id);
     const size = getItemSize(item);
     return {
       ...item,
@@ -517,7 +539,6 @@ function onItemPointerDown(e) {
   const a = itemCenter(item);
   const layer = document.getElementById("lines-layer");
 
-  // ★ 線加粗返 ★
   const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
   path.setAttribute("d", `M ${a.x} ${a.y}`);
   path.setAttribute("stroke", "#A83232");
