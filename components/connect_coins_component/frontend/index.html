@@ -663,7 +663,20 @@ function makeConnection(from, to, startTime) {
     console.log("=== 遊戲結果 ===");
     console.log(JSON.stringify(resultData, null, 2));
 
-    injectValueIntoStreamlitWidget(JSON.stringify(resultData));
+    // ★ 寫入 window（畀 streamlit_js_eval 讀）★
+try {
+    // 寫入 iframe 自己嘅 window
+    window.gameResult = resultData;
+    
+    // 寫入 parent（top frame）
+    if (window.parent && window.parent !== window) {
+        window.parent.gameResult = resultData;
+    }
+    
+    console.log("✅ 已寫入 window.gameResult");
+} catch (e) {
+    console.log("❌ 寫入失敗：", e);
+}
   }
 }
 
