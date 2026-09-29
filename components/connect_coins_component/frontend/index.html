@@ -73,11 +73,6 @@
     transform: scale(1.1);
   }
 
-  .coin.crossing {
-    filter: drop-shadow(0 0 16px rgba(200, 0, 0, 1)) !important;
-    transform: scale(1.1);
-  }
-
   .coin svg {
     width: 100%; height: 100%;
     pointer-events: none;
@@ -219,9 +214,6 @@
 </div>
 
 <script>
-// ═══════════════════════════════════════════
-// ★ 注入數據落 Streamlit text_input ★
-// ═══════════════════════════════════════════
 function injectValueIntoStreamlitWidget(text) {
   try {
     const doc = window.parent.document;
@@ -243,9 +235,6 @@ function injectValueIntoStreamlitWidget(text) {
   }
 }
 
-// ═══════════════════════════════════════════
-// 8 個 item
-// ═══════════════════════════════════════════
 const ITEMS = [
   { id: "1d",   type: "coin",  text: "$1",   value: 1,
     c1: "#F0D580", c2: "#B08F2E", c3: "#8A6F1E" },
@@ -342,7 +331,6 @@ function willCrossExisting(from, to) {
   return false;
 }
 
-// ★ 集中範圍 layout ★
 function generateLayout(W, H) {
   const effW = W * CENTER_RATIO;
   const effH = H * CENTER_RATIO;
@@ -394,7 +382,6 @@ function generateLayout(W, H) {
     if (sequenceHasNoCrossing(candidate, CORRECT_SEQUENCE)) return candidate;
   }
 
-  // Fallback: 3x3 grid
   const GRID = [];
   for (let row = 0; row < 3; row++) {
     for (let col = 0; col < 3; col++) {
@@ -425,10 +412,7 @@ function sequenceHasNoCrossing(items, seq) {
     const a = items.find(c => c.id === seq[i]);
     const b = items.find(c => c.id === seq[i + 1]);
     if (!a || !b) return false;
-    lines.push({
-      a: itemCenter(a),
-      b: itemCenter(b),
-    });
+    lines.push({ a: itemCenter(a), b: itemCenter(b) });
   }
 
   for (let i = 0; i < lines.length; i++) {
@@ -542,29 +526,14 @@ function onItemPointerDown(e) {
   state.dragging = item;
   state.dragStart = performance.now();
 
-  const a = itemCenter(item);
-  const layer = document.getElementById("lines-layer");
-  const line = document.createElementNS("http://www.w3.org/2000/svg", "line");
-  line.setAttribute("x1", a.x); line.setAttribute("y1", a.y);
-  line.setAttribute("x2", e.clientX); line.setAttribute("y2", e.clientY);
-  line.setAttribute("stroke", "#7A1F1F");
-  line.setAttribute("stroke-width", "6");
-  line.setAttribute("stroke-linecap", "round");
-  line.setAttribute("stroke-dasharray", "10 8");
-  line.setAttribute("opacity", "0.9");
-  line.id = "ghost";
-  layer.appendChild(line);
+  // ★ 冇 ghost-line！直接拖，唔顯示虛線 ★
 
   document.addEventListener("pointermove", onPointerMove);
   document.addEventListener("pointerup", onPointerUp);
 }
 
 function onPointerMove(e) {
-  const line = document.getElementById("ghost");
-  if (!line) return;
-  line.setAttribute("x2", e.clientX);
-  line.setAttribute("y2", e.clientY);
-
+  // ★ 只 highlight 目標，唔畫線 ★
   state.items.forEach(item => {
     item.el.classList.remove("highlight");
     if (!item.connectedTo && item !== state.dragging &&
@@ -580,9 +549,6 @@ function onPointerUp(e) {
 
   from.el.classList.remove("dragging");
   state.items.forEach(item => item.el.classList.remove("highlight"));
-
-  const ghost = document.getElementById("ghost");
-  if (ghost) ghost.remove();
 
   const target = state.items.find(item =>
     !item.connectedTo && item !== from && isInsideItem(e.clientX, e.clientY, item)
@@ -606,7 +572,6 @@ function makeConnection(from, to, startTime) {
 
   const crosses = willCrossExisting(from, to);
 
-  // ★ 更多段 + 更多抖動（手繪感）★
   const SEG = 12, JIT = 4;
   const pts = [];
   for (let i = 0; i <= SEG; i++) {
@@ -621,7 +586,6 @@ function makeConnection(from, to, startTime) {
   }
   const d = "M " + pts.map(p => `${p[0]} ${p[1]}`).join(" L ");
 
-  // ★ 線更粗 ★
   [["#D4A017", 12, .3], ["#5A1515", 9, .85], ["#A83232", 5, 1]]
     .forEach(([color, w, op]) => {
       const p = document.createElementNS("http://www.w3.org/2000/svg", "path");
