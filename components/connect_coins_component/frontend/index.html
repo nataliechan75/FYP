@@ -60,18 +60,18 @@
 
   .coin.dragging {
     z-index: 100;
-    transform: scale(1.15);
+    transform: scale(1.12);
   }
 
   .coin.connected {
-    filter: drop-shadow(0 0 14px rgba(255, 215, 0, 0.95))
-            drop-shadow(0 0 24px rgba(255, 215, 0, 0.6))
+    filter: drop-shadow(0 0 12px rgba(255, 215, 0, 0.7))
+            drop-shadow(0 0 20px rgba(255, 215, 0, 0.4))
             drop-shadow(0 3px 5px rgba(60, 30, 10, 0.35));
   }
 
   .coin.highlight {
-    filter: drop-shadow(0 0 16px rgba(255, 215, 0, 1))
-            drop-shadow(0 0 28px rgba(255, 215, 0, 0.7))
+    filter: drop-shadow(0 0 14px rgba(255, 215, 0, 0.85))
+            drop-shadow(0 0 24px rgba(255, 215, 0, 0.55))
             drop-shadow(0 3px 5px rgba(60, 30, 10, 0.35));
     transform: scale(1.08);
   }
@@ -266,82 +266,21 @@ const BILL_H = 58;
 const FOOTER_H = 170;
 
 // ═══════════════════════════════════════════
-// ★ 6 個固定佈局（每個都保證正確順序唔重叠）★
+// ★ 基準佈局（根據你嘅截圖）★
 // ═══════════════════════════════════════════
-// 每個佈局：8 個 { id, x, y }，x / y 係 0-1 百分比
-const LAYOUTS = [
-  // 佈局 1：S 形（由左上開始）
-  [
-    { id: "1d",   x: 0.20, y: 0.18 },
-    { id: "10b",  x: 0.50, y: 0.18 },
-    { id: "2d",   x: 0.80, y: 0.28 },
-    { id: "20b",  x: 0.80, y: 0.52 },
-    { id: "5d",   x: 0.50, y: 0.62 },
-    { id: "50b",  x: 0.20, y: 0.52 },
-    { id: "10d",  x: 0.20, y: 0.78 },
-    { id: "100b", x: 0.50, y: 0.82 },
-  ],
-
-  // 佈局 2：Z 形
-  [
-    { id: "1d",   x: 0.18, y: 0.18 },
-    { id: "10b",  x: 0.50, y: 0.14 },
-    { id: "2d",   x: 0.82, y: 0.22 },
-    { id: "20b",  x: 0.82, y: 0.48 },
-    { id: "5d",   x: 0.50, y: 0.55 },
-    { id: "50b",  x: 0.18, y: 0.48 },
-    { id: "10d",  x: 0.18, y: 0.78 },
-    { id: "100b", x: 0.50, y: 0.85 },
-  ],
-
-  // 佈局 3：倒 S 形
-  [
-    { id: "1d",   x: 0.20, y: 0.20 },
-    { id: "10b",  x: 0.20, y: 0.48 },
-    { id: "2d",   x: 0.50, y: 0.55 },
-    { id: "20b",  x: 0.80, y: 0.48 },
-    { id: "5d",   x: 0.80, y: 0.22 },
-    { id: "50b",  x: 0.50, y: 0.15 },
-    { id: "10d",  x: 0.20, y: 0.80 },
-    { id: "100b", x: 0.50, y: 0.85 },
-  ],
-
-  // 佈局 4：左右交錯
-  [
-    { id: "1d",   x: 0.22, y: 0.18 },
-    { id: "10b",  x: 0.78, y: 0.20 },
-    { id: "2d",   x: 0.22, y: 0.42 },
-    { id: "20b",  x: 0.78, y: 0.44 },
-    { id: "5d",   x: 0.22, y: 0.62 },
-    { id: "50b",  x: 0.78, y: 0.64 },
-    { id: "10d",  x: 0.22, y: 0.82 },
-    { id: "100b", x: 0.78, y: 0.84 },
-  ],
-
-  // 佈局 5：弓形（向下方）
-  [
-    { id: "1d",   x: 0.20, y: 0.20 },
-    { id: "10b",  x: 0.50, y: 0.28 },
-    { id: "2d",   x: 0.80, y: 0.20 },
-    { id: "20b",  x: 0.85, y: 0.50 },
-    { id: "5d",   x: 0.50, y: 0.60 },
-    { id: "50b",  x: 0.15, y: 0.50 },
-    { id: "10d",  x: 0.20, y: 0.80 },
-    { id: "100b", x: 0.50, y: 0.85 },
-  ],
-
-  // 佈局 6：對角線
-  [
-    { id: "1d",   x: 0.15, y: 0.15 },
-    { id: "10b",  x: 0.35, y: 0.25 },
-    { id: "2d",   x: 0.55, y: 0.35 },
-    { id: "20b",  x: 0.75, y: 0.45 },
-    { id: "5d",   x: 0.80, y: 0.65 },
-    { id: "50b",  x: 0.60, y: 0.75 },
-    { id: "10d",  x: 0.35, y: 0.80 },
-    { id: "100b", x: 0.15, y: 0.80 },
-  ],
+const BASE_LAYOUT = [
+  { id: "1d",   x: 0.18, y: 0.15 },  // $1 左上
+  { id: "10b",  x: 0.50, y: 0.13 },  // $10 上中
+  { id: "2d",   x: 0.82, y: 0.18 },  // $2 右上
+  { id: "50b",  x: 0.15, y: 0.42 },  // $50 左中
+  { id: "5d",   x: 0.55, y: 0.50 },  // $5 中間
+  { id: "20b",  x: 0.85, y: 0.42 },  // $20 右中
+  { id: "10d",  x: 0.15, y: 0.70 },  // $10硬 左下
+  { id: "100b", x: 0.55, y: 0.78 },  // $100 中下
 ];
+
+// 每次 jitter ±7%
+const JITTER = 0.07;
 
 function getSizes() {
   return { coinSize: COIN_SIZE, billW: BILL_W, billH: BILL_H, footerH: FOOTER_H };
@@ -407,29 +346,65 @@ function willCrossExisting(from, to) {
   return false;
 }
 
-// ★ 用固定佈局 ★
+// ★ 用基準佈局 + jitter ★
 function generateLayout(W, H) {
-  const layout = LAYOUTS[Math.floor(Math.random() * LAYOUTS.length)];
-  const JITTER = 0.025;  // ±2.5% 隨機偏移
+  for (let attempt = 0; attempt < 100; attempt++) {
+    const candidate = ITEMS.map(item => {
+      const slot = BASE_LAYOUT.find(s => s.id === item.id);
+      const size = getItemSize(item);
 
+      const jx = (Math.random() - 0.5) * 2 * JITTER * W;
+      const jy = (Math.random() - 0.5) * 2 * JITTER * H;
+
+      const cx = slot.x * W + jx;
+      const cy = slot.y * H + jy;
+
+      return {
+        ...item,
+        w: size.w, h: size.h,
+        x: cx - size.w / 2,
+        y: cy - size.h / 2,
+        connectedFrom: false, connectedTo: false, el: null,
+      };
+    });
+
+    // 檢查正確順序唔交叉
+    if (sequenceHasNoCrossing(candidate, CORRECT_SEQUENCE)) return candidate;
+  }
+
+  // 唔 work → 用冇 jitter 嘅基準佈局
   return ITEMS.map(item => {
-    const slot = layout.find(s => s.id === item.id);
+    const slot = BASE_LAYOUT.find(s => s.id === item.id);
     const size = getItemSize(item);
-
-    const jx = (Math.random() - 0.5) * 2 * JITTER * W;
-    const jy = (Math.random() - 0.5) * 2 * JITTER * H;
-
-    const cx = slot.x * W + jx;
-    const cy = slot.y * H + jy;
-
     return {
       ...item,
       w: size.w, h: size.h,
-      x: cx - size.w / 2,
-      y: cy - size.h / 2,
+      x: slot.x * W - size.w / 2,
+      y: slot.y * H - size.h / 2,
       connectedFrom: false, connectedTo: false, el: null,
     };
   });
+}
+
+function sequenceHasNoCrossing(items, seq) {
+  const lines = [];
+  for (let i = 0; i < seq.length - 1; i++) {
+    const a = items.find(c => c.id === seq[i]);
+    const b = items.find(c => c.id === seq[i + 1]);
+    if (!a || !b) return false;
+    lines.push({ a: itemCenter(a), b: itemCenter(b) });
+  }
+
+  for (let i = 0; i < lines.length; i++) {
+    for (let j = i + 1; j < lines.length; j++) {
+      if (j === i + 1) continue;
+      if (segmentsIntersect(lines[i].a, lines[i].b, lines[j].a, lines[j].b)) {
+        return false;
+      }
+    }
+  }
+
+  return true;
 }
 
 function coinSvg(item) {
@@ -538,12 +513,12 @@ function onItemPointerDown(e) {
 
   const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
   path.setAttribute("d", `M ${a.x} ${a.y}`);
-  path.setAttribute("stroke", "#A83232");
-  path.setAttribute("stroke-width", "7");
+  path.setAttribute("stroke", "#8B3A2B");
+  path.setAttribute("stroke-width", "3.5");
   path.setAttribute("stroke-linecap", "round");
   path.setAttribute("stroke-linejoin", "round");
   path.setAttribute("fill", "none");
-  path.setAttribute("opacity", "1");
+  path.setAttribute("opacity", "0.7");
   path.id = "live-path";
   layer.appendChild(path);
 
