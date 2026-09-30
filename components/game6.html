@@ -448,8 +448,8 @@
 // ═══════════════════════════════════════════
 const QUESTIONS = [
   {
-    display: "鹽同糖",
-    speak: "鹽同糖有咩相似？",
+    display: "檸檬同醋",
+    speak: "檸檬同醋有咩相似？",
   },
   {
     display: "魚同蝦",
@@ -660,6 +660,26 @@ document.getElementById("submit-btn").addEventListener("click", () => {
   }
 });
 
+// ═══════════════════════════════════════════
+// 寫入 Streamlit URL
+// ═══════════════════════════════════════════
+function injectValueIntoStreamlitWidget(text) {
+  try {
+    const win = window.parent;
+    const currentUrl = new URL(win.location.href);
+    currentUrl.searchParams.set("game6_result", text);
+    win.history.replaceState({}, "", currentUrl.toString());
+    console.log("✅ 已寫入 URL");
+  } catch (e) {
+    console.log("❌ URL 寫入失敗：", e);
+  }
+}
+
+// ═══════════════════════════════════════════
+// MoCA 評分：每題答對 = 1 分，總分 0–2
+// 因為要用 AI 判斷語意，所以喺 Python 端做
+// 呢度只寫入答案
+// ═══════════════════════════════════════════
 function finishGame() {
   document.getElementById("done-panel").classList.add("show");
 
@@ -669,8 +689,10 @@ function finishGame() {
     questions: QUESTIONS.map(q => q.display),
     player_answers: answers,
   };
-  console.log("=== 遊戲結果 ===");
+  console.log("=== 遊戲結果（已傳出）===");
   console.log(JSON.stringify(result, null, 2));
+
+  injectValueIntoStreamlitWidget(JSON.stringify(result));
 }
 
 if (typeof speechSynthesis !== "undefined") {
