@@ -4,7 +4,16 @@
 import streamlit as st
 
 # 遊戲順序
-GAME_ORDER = ["intro", "connect_coins", "game2", "game3", "game4", "game5", "game6", "end"]
+GAME_ORDER = [
+    "intro",
+    "connect_coins",
+    "game2",
+    "game3",
+    "game4",
+    "game5",
+    "game6",
+    "end",
+]
 
 # 遊戲名（中文）
 GAME_NAMES = {
