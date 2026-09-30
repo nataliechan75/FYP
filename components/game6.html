@@ -530,35 +530,65 @@ function pickCantoneseVoice() {
   return null;
 }
 
-document.getElementById("read-btn").addEventListener("click", () => {
-  const q = QUESTIONS[currentIdx];
+// ═══════════════════════════════════════════
+// 播放問題（Edge TTS 預載 MP3）
+// ═══════════════════════════════════════════
+const PRELOADED_AUDIO_GAME6 = [];   // ← Streamlit 會 replace 呢行
+
+let currentAudio = null;
+
+function onSpeakEnd() {
   const readBtn = document.getElementById("read-btn");
   const micBtn = document.getElementById("mic-btn");
 
-  window.speechSynthesis.cancel();
+  readBtn.textContent = "🔊 再播一次";
+  readBtn.classList.remove("playing");
+  readBtn.disabled = false;
+
+  micBtn.disabled = false;
+  micBtn.textContent = "🎤 開始錄音";
+
+  const recText = document.getElementById("recognized-text");
+  recText.textContent = "（撳「開始錄音」答問題）";
+  recText.classList.add("empty");
+}
+
+document.getElementById("read-btn").addEventListener("click", () => {
+  const readBtn = document.getElementById("read-btn");
+
+  if (currentAudio) {
+    currentAudio.pause();
+    currentAudio = null;
+  }
 
   readBtn.disabled = true;
   readBtn.textContent = "🔊 播放中...";
   readBtn.classList.add("playing");
 
-  const utterance = new SpeechSynthesisUtterance(q.speak);
-  utterance.lang = "zh-HK";
-  utterance.rate = 0.5;      // ★ 慢啲（同 Game 4 一致）
-  utterance.pitch = 1.0;
-  utterance.volume = 1.0;
+  const audioSrc = PRELOADED_AUDIO_GAME6[currentIdx];
 
-  const voice = pickCantoneseVoice();
-  if (voice) utterance.voice = voice;
+  if (!audioSrc) {
+    console.warn("冇預載音頻");
+    alert("播放失敗，請重新載入頁面。");
+    onSpeakEnd();
+    return;
+  }
 
-  utterance.onend = onSpeakEnd;
-  utterance.onerror = (e) => {
-    console.error("TTS 錯誤：", e);
+  const audio = new Audio(audioSrc);
+  currentAudio = audio;
+  audio.onended = onSpeakEnd;
+  audio.onerror = () => {
+    console.error("Edge TTS 音頻失敗");
+    alert("播放失敗。");
     onSpeakEnd();
   };
 
-  window.speechSynthesis.speak(utterance);
+  audio.play().catch(err => {
+    console.error("Play 失敗：", err);
+    alert("播放失敗。");
+    onSpeakEnd();
+  });
 });
-
 // ═══════════════════════════════════════════
 // 語音辨識（跟 Game 4：yue-Hant-HK）
 // ═══════════════════════════════════════════
