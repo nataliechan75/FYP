@@ -21,7 +21,7 @@ async def _generate_async(text: str, voice: str, rate: str = "-10%") -> bytes:
     return audio_data
 
 
-def generate_speech(text: str, voice_key: str = "female_1", rate: str = "-10%") -> bytes:
+def generate_speech(text: str, voice_key: str = "female_2", rate: str = "-20%") -> bytes:
     voice = YUE_VOICES.get(voice_key, YUE_VOICES["female_1"])
     loop = asyncio.new_event_loop()
     asyncio.set_event_loop(loop)
