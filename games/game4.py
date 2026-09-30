@@ -40,7 +40,7 @@ def render():
         f"<!-- iframe_ts: {ts} --></body>"
     )
 
-    st.components.v1.html(html_content, height=900, scrolling=False)
+    st.components.v1.html(html_content, height=650, scrolling=False)
 
     col1, col2, col3 = st.columns([1, 2, 1])
     with col2:
