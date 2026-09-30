@@ -519,8 +519,25 @@ function matchVegetables(text) {
 }
 
 // ═══════════════════════════════════════════
-// 結束遊戲
+// 寫入 Streamlit URL
 // ═══════════════════════════════════════════
+function injectValueIntoStreamlitWidget(text) {
+  try {
+    const win = window.parent;
+    const currentUrl = new URL(win.location.href);
+    currentUrl.searchParams.set("game5_result", text);
+    win.history.replaceState({}, "", currentUrl.toString());
+    console.log("✅ 已寫入 URL");
+  } catch (e) {
+    console.log("❌ URL 寫入失敗：", e);
+  }
+}
+
+// ═══════════════════════════════════════════
+// MoCA 評分：一分鐘內 ≥ 11 個 → 1 分，否則 0 分
+// ═══════════════════════════════════════════
+const PASS_THRESHOLD = 11;   // ★ 可改（MoCA 官方係 11）
+
 function endGame() {
   clearInterval(timerInterval);
 
@@ -533,20 +550,28 @@ function endGame() {
   // 最後一次比對（避免漏）
   matchVegetables(allText);
 
+  const total = foundVegetables.size;
+  const score = total >= PASS_THRESHOLD ? 1 : 0;
+
   // 顯示完成面板
-  document.getElementById("final-count").textContent = foundVegetables.size;
+  document.getElementById("final-count").textContent = total;
   document.getElementById("done-panel").classList.add("show");
 
   // 記錄結果
   const result = {
     game_id: "game5",
     completed: true,
-    total_vegetables: foundVegetables.size,
+    score: score,                              // ★ 0 或 1
+    is_correct: score === 1,
+    total_vegetables: total,
+    pass_threshold: PASS_THRESHOLD,
     vegetables_found: [...foundVegetables],
     full_text: allText,
   };
-  console.log("=== 遊戲結果 ===");
+  console.log("=== 遊戲結果（已傳出）===");
   console.log(JSON.stringify(result, null, 2));
+
+  injectValueIntoStreamlitWidget(JSON.stringify(result));
 }
 </script>
 </body>
