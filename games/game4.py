@@ -30,7 +30,7 @@ def render():
             audios = []
             for s in SENTENCES:
                 try:
-                    mp3_bytes = generate_speech(s, voice_key="female_1", rate="-10%")
+                    mp3_bytes = generate_speech(s, voice_key="female_2", rate="-10%")
                     b64 = base64.b64encode(mp3_bytes).decode("utf-8")
                     audios.append(f"data:audio/mp3;base64,{b64}")
                 except Exception as e:
