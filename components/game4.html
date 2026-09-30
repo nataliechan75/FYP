@@ -424,6 +424,7 @@ function updateUI() {
   micBtn.disabled = true;
   micBtn.textContent = "🎤 開始錄音";
   micBtn.classList.remove("recording");
+  micBtn.style.display = "inline-block";   // ★ 顯示返
 
   document.getElementById("retry-btn").style.display = "none";
 
@@ -574,11 +575,10 @@ document.getElementById("mic-btn").addEventListener("click", () => {
       recText.classList.remove("empty");
     } catch (e) { console.error(e); }
   } else {
-    // ★ 停止錄音 → 唔可以再撳 mic-btn
+    // ★ 停止錄音 → 隱藏 mic-btn，只顯示 retry-btn
     try { recognition.stop(); } catch (e) {}
     isRecording = false;
-    micBtn.textContent = "🎤 已完成錄音";
-    micBtn.disabled = true;
+    micBtn.style.display = "none";             // ★ 隱藏
     micBtn.classList.remove("recording");
 
     results[currentIdx] = recText.textContent;
@@ -602,6 +602,7 @@ document.getElementById("retry-btn").addEventListener("click", () => {
   micBtn.textContent = "🎤 開始錄音";
   micBtn.classList.remove("recording");
   micBtn.disabled = false;
+  micBtn.style.display = "inline-block";       // ★ 顯示返
 
   recText.textContent = "（撳「開始錄音」再講一次）";
   recText.classList.add("empty");
