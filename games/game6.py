@@ -47,8 +47,8 @@ def render():
                 answers = data.get("player_answers", [])
 
                 if questions and answers:
-                    with st.spinner("🤖 AI 正在判斷你嘅答案..."):
-                        ai_result = score_abstraction_with_ai(questions, answers)
+                    # ★ 冇 spinner
+                    ai_result = score_abstraction_with_ai(questions, answers)
                 else:
                     ai_result = {
                         "score": 0,
@@ -76,7 +76,7 @@ def render():
                 "completed_at": time.strftime("%Y-%m-%d %H:%M:%S"),
                 "skipped": skipped,
                 "is_correct": score == 2,
-                "score": score,                     # ★ 0–2 分
+                "score": score,
                 "conditions": ai_result.get("conditions", {}),
                 "reasons": ai_result.get("reasons", []),
                 "ai_reason": ai_result.get("reason", ""),
