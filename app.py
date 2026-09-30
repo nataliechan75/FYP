@@ -4,6 +4,7 @@
 import streamlit as st
 import pandas as pd
 import time
+import base64
 
 from core.state import (
     init_state,
@@ -11,6 +12,7 @@ from core.state import (
     GAME_NAMES,
     GAME_MAX_SCORES,
 )
+from core.tts import generate_speech
 from games import connect_coins, game2, game3, game4, game5, game6
 
 # 頁面設定
@@ -22,6 +24,20 @@ st.set_page_config(
 
 # 初始化
 init_state()
+
+# ★ 預先生成 Game 4 嘅 MP3（靜默，唔顯示 spinner）
+SENTENCES_GAME4 = ["姨媽買豬腸", "阿婆煲老火湯"]
+
+if "game4_audio" not in st.session_state:
+    audios = []
+    for s in SENTENCES_GAME4:
+        try:
+            mp3_bytes = generate_speech(s, voice_key="female_1", rate="-10%")
+            b64 = base64.b64encode(mp3_bytes).decode("utf-8")
+            audios.append(f"data:audio/mp3;base64,{b64}")
+        except Exception:
+            audios.append("")
+    st.session_state.game4_audio = audios
 
 # 主流程
 current = st.session_state.current_game
@@ -78,6 +94,7 @@ elif current == "end":
 
     if st.button("🔄 再開一次檔", type="primary", key="restart_all"):
         st.session_state.clear()
+        st.session_state["_reload_ts"] = int(time.time() * 1000)
         st.rerun()
 
     # ── 隱藏按鈕（只有你睇）──
