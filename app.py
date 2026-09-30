@@ -32,7 +32,7 @@ if "game4_audio" not in st.session_state:
     audios = []
     for s in SENTENCES_GAME4:
         try:
-            mp3_bytes = generate_speech(s, voice_key="female_1", rate="-10%")
+            mp3_bytes = generate_speech(s, voice_key="female_2", rate="-20%")
             b64 = base64.b64encode(mp3_bytes).decode("utf-8")
             audios.append(f"data:audio/mp3;base64,{b64}")
         except Exception:
