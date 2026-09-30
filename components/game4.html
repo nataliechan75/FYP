@@ -500,7 +500,7 @@ document.getElementById("read-btn").addEventListener("click", () => {
 });
 
 // ═══════════════════════════════════════════
-// 錄音 + 語音辨識
+// 錄音 + 語音辨識（粵語）
 // ═══════════════════════════════════════════
 let recognition = null;
 let isRecording = false;
@@ -513,9 +513,12 @@ function initRecognition() {
   }
 
   const rec = new SR();
-  rec.lang = "zh-HK";
+
+  // ★ 粵語 lang code
+  rec.lang = "yue-Hant-HK";
   rec.continuous = true;
   rec.interimResults = true;
+  rec.maxAlternatives = 1;
 
   rec.onresult = (event) => {
     let finalText = "";
@@ -537,6 +540,13 @@ function initRecognition() {
     console.error("語音辨識錯誤：", e.error);
     if (e.error === "not-allowed") {
       alert("需要麥克風權限。請喺瀏覽器設定允許。");
+    } else if (e.error === "language-not-supported") {
+      // ★ Fallback：yue-Hant-HK 唔支援 → 試 zh-HK
+      console.warn("yue-Hant-HK 唔支援，試 zh-HK");
+      rec.lang = "zh-HK";
+      if (isRecording) {
+        try { rec.start(); } catch (err) {}
+      }
     }
   };
 
