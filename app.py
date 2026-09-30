@@ -81,7 +81,7 @@ if current == "intro":
 # ═══════════════════════════════════════════
 # 遊戲
 # ═══════════════════════════════════════════
-elif current == "connect_coins":
+elif current == "game1":
     game1.render()
 
 elif current == "game2":
