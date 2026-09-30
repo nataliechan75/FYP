@@ -12,7 +12,7 @@ YUE_VOICES = {
 }
 
 
-async def _generate_async(text: str, voice: str, rate: str = "-10%") -> bytes:
+async def _generate_async(text: str, voice: str, rate: str = "-20%") -> bytes:
     communicate = edge_tts.Communicate(text, voice, rate=rate)
     audio_data = b""
     async for chunk in communicate.stream():
@@ -22,7 +22,7 @@ async def _generate_async(text: str, voice: str, rate: str = "-10%") -> bytes:
 
 
 def generate_speech(text: str, voice_key: str = "female_2", rate: str = "-20%") -> bytes:
-    voice = YUE_VOICES.get(voice_key, YUE_VOICES["female_1"])
+    voice = YUE_VOICES.get(voice_key, YUE_VOICES["female_2"])
     loop = asyncio.new_event_loop()
     asyncio.set_event_loop(loop)
     try:
