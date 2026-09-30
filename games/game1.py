@@ -15,9 +15,7 @@ def render():
     html_path = (
         Path(__file__).parent.parent
         / "components"
-        / "connect_coins_component"
-        / "frontend"
-        / "index.html"
+        / "game1.html"
     )
 
     if not html_path.exists():
