@@ -6,129 +6,130 @@
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
 
-  body {
+  html, body {
     font-family: "Noto Sans TC", "PingFang HK", sans-serif;
-    background: #F5E6C8;
+    background: #2A1810;
     color: #2B1A08;
     overflow: hidden;
     width: 100%;
     height: 100%;
-    overflow: hidden;
-    font-size: 24px;
+    margin: 0;
+    padding: 0;
+    font-size: 16px;
   }
 
-  #wrap {
-    display: flex;
-    flex-direction: column;
+  #game-wrap {
+    position: relative;
     width: 100%;
     height: 100%;
-    padding: 10px;
-    gap: 8px;
-  }
-
-  #prompt {
-    background: linear-gradient(180deg, #A83232, #7A1F1F);
-    color: #F5E6C8;
-    padding: 10px 16px;
-    border-radius: 14px;
-    border: 3px solid #D4A017;
-    font-size: 20px;
-    font-weight: 700;
-    text-align: center;
-    box-shadow: 0 4px 12px rgba(90,21,21,0.3);
-    flex-shrink: 0;
-  }
-
-  #reference {
-    background: linear-gradient(180deg, #FFF8E7, #F5E6C8);
-    border: 4px solid #7A1F1F;
-    border-radius: 14px;
-    padding: 10px;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    height: 30%;
-    mini-height: 140px;
-    position: relative;
-    flex-shrink: 0;
-  }
-
-  #reference::before {
-    content: "📖 參考圖";
-    position: absolute;
-    top: 8px;
-    left: 16px;
-    font-size: 18px;
-    font-weight: 700;
-    color: #7A1F1F;
-    opacity: 0.7;
-  }
-
-  #reference svg {
-    height: 100%;
-    max-height: 100%;
-  }
-
-  #canvas-wrap {
-    flex: 1;
-    background: #FFFEF8;
-    border: 4px dashed #7A1F1F;
-    border-radius: 14px;
-    position: relative;
     overflow: hidden;
-    box-shadow: inset 0 2px 8px rgba(90,21,21,0.1);
+    touch-action: none;
   }
 
-  #canvas-wrap::before {
-    content: "✏️ 喺呢度畫";
+  #bg {
     position: absolute;
-    top: 8px;
-    left: 16px;
-    font-size: 18px;
-    font-weight: 700;
-    color: #7A1F1F;
-    opacity: 0.5;
+    inset: 0;
+    background-color: #F5E6C8;
+    background-image:
+      radial-gradient(circle at 15% 25%, rgba(122, 31, 31, 0.08) 0%, transparent 45%),
+      radial-gradient(circle at 85% 75%, rgba(212, 160, 23, 0.12) 0%, transparent 50%),
+      repeating-linear-gradient(88deg,
+        rgba(90, 40, 20, 0.04) 0 2px,
+        transparent 2px 8px);
     pointer-events: none;
   }
 
   #canvas {
-    width: 100%;
-    height: 100%;
-    cursor: crosshair;
+    position: absolute;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    z-index: 1;
+    pointer-events: none;
+  }
+
+  .coin {
+    position: absolute;
+    cursor: grab;
+    user-select: none;
+    z-index: 10;
     touch-action: none;
+    transition: transform 0.15s ease;
+    filter: drop-shadow(0 3px 5px rgba(60, 30, 10, 0.4));
+  }
+
+  .coin.dragging {
+    z-index: 100;
+    transform: scale(1.12);
+  }
+
+  .coin.connected {
+    filter: drop-shadow(0 0 12px rgba(255, 215, 0, 0.7))
+            drop-shadow(0 0 20px rgba(255, 215, 0, 0.4))
+            drop-shadow(0 3px 5px rgba(60, 30, 10, 0.35));
+  }
+
+  .coin.highlight {
+    filter: drop-shadow(0 0 14px rgba(255, 215, 0, 0.85))
+            drop-shadow(0 0 24px rgba(255, 215, 0, 0.55))
+            drop-shadow(0 3px 5px rgba(60, 30, 10, 0.35));
+    transform: scale(1.08);
+  }
+
+  .coin svg {
+    width: 100%; height: 100%;
+    pointer-events: none;
+    display: block;
   }
 
   #footer {
+    position: absolute;
+    bottom: 0; left: 0; right: 0;
+    padding: 14px 18px;
+    background: linear-gradient(180deg,
+      rgba(245, 230, 200, 0.94) 0%,
+      rgba(232, 212, 168, 0.98) 100%);
+    border-top: 3px solid #7A1F1F;
+    box-shadow: 0 -2px 0 #D4A017;
     display: flex;
-    gap: 12px;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+    z-index: 200;
+  }
+
+  #hint {
+    font-size: 23px;
+    font-weight: 700;
+    color: #7A1F1F;
+    width: 100%;
+    text-align: center;
+    line-height: 1.4;
+  }
+
+  #footer-buttons {
+    display: flex;
+    gap: 10px;
     justify-content: center;
-    flex-shrink: 0;
+    flex-wrap: wrap;
   }
 
   .btn {
     font-family: inherit;
     font-size: 25px;
-    font-weight: 800;
-    padding: 16px 36px;
-    border: 4px solid #5A1515;
-    border-radius: 14px;
-    background: linear-gradient(180deg, #A83232, #7A1F1F);
+    font-weight: 900;
+    padding: 12px 20px;
+    border: 3px solid #5A1515;
+    border-radius: 10px;
+    background: linear-gradient(180deg, #A83232 0%, #7A1F1F 100%);
     color: #F5E6C8;
     cursor: pointer;
-    min-width: 160px;
-    box-shadow: 0 4px 0 #5A1515, 0 6px 12px rgba(90,21,21,0.3);
+    min-width: 100px;
+    box-shadow: 0 3px 0 #5A1515;
   }
 
-  .btn:hover {
-    background: linear-gradient(180deg, #F0C952, #D4A017);
-    color: #2B1A08;
-    transform: translateY(-2px);
-  }
-
-  .btn.secondary {
-    background: linear-gradient(180deg, #F5E6C8, #E8D4A8);
-    color: #7A1F1F;
-    box-shadow: 0 4px 0 #7A1F1F, 0 6px 12px rgba(90,21,21,0.2);
+  .btn:active:not(:disabled) {
+    transform: translateY(2px);
+    box-shadow: 0 1px 0 #5A1515;
   }
 
   .btn:disabled {
@@ -136,13 +137,19 @@
     border-color: #8A7A58;
     color: #6A5A40;
     cursor: not-allowed;
-    box-shadow: 0 4px 0 #8A7A58;
+    box-shadow: 0 3px 0 #8A7A58;
   }
 
-  #done-panel {
+  .btn.secondary {
+    background: linear-gradient(180deg, #F5E6C8 0%, #E8D4A8 100%);
+    color: #7A1F1F;
+    box-shadow: 0 3px 0 #7A1F1F;
+  }
+
+  #finish-popup {
     position: fixed;
     inset: 0;
-    background: rgba(42,24,16,0.9);
+    background: rgba(42,24,16,0.85);
     display: none;
     align-items: center;
     justify-content: center;
@@ -150,250 +157,525 @@
     padding: 24px;
   }
 
-  #done-panel.show { display: flex !important; }
+  #finish-popup.show {
+    display: flex !important;
+  }
 
-  #done-card {
+  #finish-card {
     background: linear-gradient(180deg, #F5E6C8, #E8D4A8);
     border: 6px solid #7A1F1F;
     border-radius: 24px;
     padding: 32px 40px;
-    max-width: 600px;
-    max-height: 90vh;
-    overflow-y: auto;
+    max-width: 450px;
     text-align: center;
     box-shadow: 0 0 0 8px #D4A017, 0 30px 80px rgba(0,0,0,0.6);
+    animation: popIn 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
   }
 
-  #done-card h2 {
+  @keyframes popIn {
+    0%   { opacity: 0; transform: scale(0.7); }
+    100% { opacity: 1; transform: scale(1); }
+  }
+
+  #finish-card h2 {
     font-size: 32px;
     color: #7A1F1F;
     margin-bottom: 12px;
   }
 
-  #done-card p {
-    font-size: 25px;
+  #finish-card p {
+    font-size: 30px;
     color: #5A4030;
-    margin-bottom: 20px;
-  }
-
-  #player-drawing {
-    background: #FFFEF8;
-    border: 4px solid #7A1F1F;
-    border-radius: 12px;
-    margin: 20px auto;
-    padding: 8px;
-    max-width: 340px;
-    box-shadow: inset 0 2px 6px rgba(90,21,21,0.1);
-  }
-
-  #player-drawing img {
-    width: 100%;
-    display: block;
-  }
-
-  #done-card .btn {
-    width: 100%;
-    margin-top: 20px;
+    line-height: 1.6;
   }
 </style>
 </head>
 <body>
 
-<div id="wrap">
-  <div id="prompt">
-    🧺 阿婆話：「跟住呢個購物籃畫返出嚟，越準確越好！」
-  </div>
+<div id="game-wrap">
+  <div id="bg"></div>
+  <svg id="canvas" xmlns="http://www.w3.org/2000/svg"
+       width="100%" height="100%">
+    <g id="lines-layer"></g>
+  </svg>
+</div>
 
-  <div id="reference">
-    <svg viewBox="0 0 280 280" xmlns="http://www.w3.org/2000/svg">
-      <g stroke="#2B1A08" stroke-width="6" fill="none"
-         stroke-linecap="round" stroke-linejoin="round">
-        <rect x="60" y="100" width="140" height="140"/>
-        <rect x="110" y="50" width="140" height="140"/>
-        <line x1="60" y1="100" x2="110" y2="50"/>
-        <line x1="200" y1="100" x2="250" y2="50"/>
-        <line x1="60" y1="240" x2="110" y2="190"/>
-        <line x1="200" y1="240" x2="250" y2="190"/>
-      </g>
-    </svg>
-  </div>
-
-  <div id="canvas-wrap">
-    <canvas id="canvas"></canvas>
-  </div>
-
-  <div id="footer">
-    <button class="btn secondary" id="clear-btn">🔄 清除</button>
-    <button class="btn" id="done-btn" disabled>✅ 完成</button>
+<div id="footer">
+  <div id="hint">💡 1 元硬幣 → 10 元紙幣 → 2 元硬幣 → …… → 100 元紙幣</div>
+  <div id="footer-buttons">
+    <button class="btn secondary" id="undo-btn" disabled>↩️ 撤銷</button>
+    <button class="btn" id="restart-btn">🔄 重新開始</button>
   </div>
 </div>
 
-<div id="done-panel">
-  <div id="done-card">
-    <h2>🎉 畫得好靚！</h2>
-    <p>呢個就係你畫嘅購物籃！<br>請拉向下撳<br>「➡️ 去下一關」</p>
-
-    <div id="player-drawing">
-      <img id="player-img" alt="玩家畫嘅購物籃">
-    </div>
+<div id="finish-popup">
+  <div id="finish-card">
+    <h2>✅ 完成啦！</h2>
+    <p>請拉向下撳<br>「➡️ 去下一關」</p>
   </div>
 </div>
 
 <script>
-// ═══════════════════════════════════════════
-// 畫布設定
-// ═══════════════════════════════════════════
-const canvas = document.getElementById("canvas");
-const ctx = canvas.getContext("2d");
-
-let isDrawing = false;
-let hasDrawn = false;
-let strokes = [];
-let currentStroke = null;
-
-function resizeCanvas() {
-  const wrap = document.getElementById("canvas-wrap");
-  const rect = wrap.getBoundingClientRect();
-  const dpr = window.devicePixelRatio || 1;
-
-  canvas.width = rect.width * dpr;
-  canvas.height = rect.height * dpr;
-  canvas.style.width = rect.width + "px";
-  canvas.style.height = rect.height + "px";
-
-  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-  ctx.lineWidth = 3;
-  ctx.lineCap = "round";
-  ctx.lineJoin = "round";
-  ctx.strokeStyle = "#2B1A08";
-
-  redraw();
-}
-
-window.addEventListener("load", resizeCanvas);
-window.addEventListener("resize", resizeCanvas);
-
-// ═══════════════════════════════════════════
-// 繪畫
-// ═══════════════════════════════════════════
-function getPos(e) {
-  const rect = canvas.getBoundingClientRect();
-  return { x: e.clientX - rect.left, y: e.clientY - rect.top };
-}
-
-function startDraw(e) {
-  e.preventDefault();
-  isDrawing = true;
-  const pos = getPos(e);
-  currentStroke = [pos];
-  ctx.beginPath();
-  ctx.moveTo(pos.x, pos.y);
-}
-
-function moveDraw(e) {
-  if (!isDrawing) return;
-  e.preventDefault();
-  const pos = getPos(e);
-  currentStroke.push(pos);
-  ctx.lineTo(pos.x, pos.y);
-  ctx.stroke();
-  hasDrawn = true;
-  document.getElementById("done-btn").disabled = false;
-}
-
-function endDraw(e) {
-  if (!isDrawing) return;
-  isDrawing = false;
-  if (currentStroke && currentStroke.length > 0) {
-    strokes.push(currentStroke);
-  }
-  currentStroke = null;
-}
-
-canvas.addEventListener("pointerdown", startDraw);
-canvas.addEventListener("pointermove", moveDraw);
-canvas.addEventListener("pointerup", endDraw);
-canvas.addEventListener("pointercancel", endDraw);
-canvas.addEventListener("pointerleave", endDraw);
-
-// ═══════════════════════════════════════════
-// 重繪
-// ═══════════════════════════════════════════
-function redraw() {
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
-  strokes.forEach(stroke => {
-    if (stroke.length === 0) return;
-    ctx.beginPath();
-    ctx.moveTo(stroke[0].x, stroke[0].y);
-    for (let i = 1; i < stroke.length; i++) {
-      ctx.lineTo(stroke[i].x, stroke[i].y);
-    }
-    ctx.stroke();
-  });
-}
-
-// ═══════════════════════════════════════════
-// 清除
-// ═══════════════════════════════════════════
-document.getElementById("clear-btn").addEventListener("click", () => {
-  strokes = [];
-  hasDrawn = false;
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
-  document.getElementById("done-btn").disabled = true;
-});
-
-// ═══════════════════════════════════════════
-// 寫入 Streamlit URL
-// ═══════════════════════════════════════════
 function injectValueIntoStreamlitWidget(text) {
   try {
     const win = window.parent;
     const currentUrl = new URL(win.location.href);
-    currentUrl.searchParams.set("game2_result", text);
+    currentUrl.searchParams.set("game1_result", text);
     win.history.replaceState({}, "", currentUrl.toString());
-    console.log("✅ 已寫入 URL，size (KB):", Math.round(text.length / 1024));
+    console.log("✅ 已寫入 URL：", currentUrl.toString());
   } catch (e) {
     console.log("❌ URL 寫入失敗：", e);
+    try {
+      const doc = window.parent.document;
+      const inputs = doc.querySelectorAll('input[type="text"], textarea');
+      if (inputs.length > 0) {
+        const target = inputs[0];
+        const setter = Object.getOwnPropertyDescriptor(
+          window.HTMLInputElement.prototype, "value"
+        ).set;
+        setter.call(target, text);
+        target.dispatchEvent(new Event("input", { bubbles: true }));
+        target.dispatchEvent(new Event("change", { bubbles: true }));
+        console.log("✅ Fallback：已注入 text_input");
+      }
+    } catch (e2) {
+      console.log("❌ Fallback 都失敗：", e2);
+    }
   }
 }
 
-// ═══════════════════════════════════════════
-// 壓縮 canvas
-// ═══════════════════════════════════════════
-function compressCanvas(canvas, maxW = 400) {
-  const scale = Math.min(1, maxW / canvas.width);
-  const tmp = document.createElement("canvas");
-  tmp.width = Math.round(canvas.width * scale);
-  tmp.height = Math.round(canvas.height * scale);
-  const tctx = tmp.getContext("2d");
-  tctx.fillStyle = "#FFFFFF";
-  tctx.fillRect(0, 0, tmp.width, tmp.height);
-  tctx.drawImage(canvas, 0, 0, tmp.width, tmp.height);
-  return tmp.toDataURL("image/jpeg", 0.7);
+const ITEMS = [
+  { id: "1d",   type: "coin",  text: "$1",   value: 1,
+    c1: "#F0D580", c2: "#B08F2E", c3: "#8A6F1E" },
+  { id: "10b",  type: "bill",  text: "$10",  value: 10,
+    c1: "#C9A0DC", c2: "#9B59B6", c3: "#6A3B8A" },
+  { id: "2d",   type: "coin",  text: "$2",   value: 2,
+    c1: "#F0D580", c2: "#B08F2E", c3: "#8A6F1E" },
+  { id: "20b",  type: "bill",  text: "$20",  value: 20,
+    c1: "#8AB6E8", c2: "#4A7BC4", c3: "#2D4A8A" },
+  { id: "5d",   type: "coin",  text: "$5",   value: 5,
+    c1: "#E8E8E8", c2: "#9A9A9A", c3: "#6A6A6A" },
+  { id: "50b",  type: "bill",  text: "$50",  value: 50,
+    c1: "#A0D9A0", c2: "#4A8A4E", c3: "#2D5A30" },
+  { id: "10d",  type: "coin",  text: "$10",  value: 10,
+    c1: "#D4B584", c2: "#8B6F3A", c3: "#6A4F28" },
+  { id: "100b", type: "bill",  text: "$100", value: 100,
+    c1: "#E88A8A", c2: "#C0392B", c3: "#7A1F1F" },
+];
+
+const CORRECT_SEQUENCE = ["1d", "10b", "2d", "20b", "5d", "50b", "10d", "100b"];
+const TARGET_CONNECTIONS = ITEMS.length - 1;
+
+const COIN_SIZE = 65;
+const BILL_W = 90;
+const BILL_H = 58;
+const FOOTER_H = 170;
+
+const FALLBACK_LAYOUT = [
+  { id: "1d",   x: 0.25, y: 0.18 },
+  { id: "10b",  x: 0.50, y: 0.15 },
+  { id: "2d",   x: 0.75, y: 0.20 },
+  { id: "50b",  x: 0.22, y: 0.45 },
+  { id: "5d",   x: 0.50, y: 0.48 },
+  { id: "20b",  x: 0.78, y: 0.45 },
+  { id: "10d",  x: 0.22, y: 0.72 },
+  { id: "100b", x: 0.55, y: 0.75 },
+];
+
+function getSizes() {
+  return { coinSize: COIN_SIZE, billW: BILL_W, billH: BILL_H, footerH: FOOTER_H };
 }
 
-// ═══════════════════════════════════════════
-// 完成
-// ═══════════════════════════════════════════
-document.getElementById("done-btn").addEventListener("click", () => {
-  const dataURL = canvas.toDataURL("image/png");
-  document.getElementById("player-img").src = dataURL;
-  document.getElementById("done-panel").classList.add("show");
+let SIZES = getSizes();
 
-  const compressed = compressCanvas(canvas, 400);
+function getItemSize(item) {
+  return item.type === "coin"
+    ? { w: SIZES.coinSize, h: SIZES.coinSize }
+    : { w: SIZES.billW, h: SIZES.billH };
+}
 
-  const result = {
-    game_id: "game2",
-    completed: true,
-    stroke_count: strokes.length,
-    total_points: strokes.reduce((sum, s) => sum + s.length, 0),
-    image: compressed,
+let state = {
+  items: [],
+  connections: [],
+  undoCount: 0,
+  startTime: null,
+  dragging: null,
+  dragStart: null,
+  currentPath: null,
+};
+
+function cross(o, a, b) {
+  return (a.x - o.x) * (b.y - o.y) - (a.y - o.y) * (b.x - o.x);
+}
+
+function segmentsIntersect(a, b, c, d) {
+  const d1 = cross(c, d, a);
+  const d2 = cross(c, d, b);
+  const d3 = cross(a, b, c);
+  const d4 = cross(a, b, d);
+  return ((d1 > 0 && d2 < 0) || (d1 < 0 && d2 > 0)) &&
+         ((d3 > 0 && d4 < 0) || (d3 < 0 && d4 > 0));
+}
+
+function itemCenter(item) {
+  return { x: item.x + item.w / 2, y: item.y + item.h / 2 };
+}
+
+function isInsideItem(px, py, item) {
+  const c = itemCenter(item);
+  const r = Math.max(item.w, item.h) / 2 + 15;
+  return Math.hypot(px - c.x, py - c.y) <= r;
+}
+
+function willCrossExisting(from, to) {
+  const a = itemCenter(from);
+  const b = itemCenter(to);
+
+  for (const conn of state.connections) {
+    if (conn.from === from.id || conn.to === from.id) continue;
+    if (conn.from === to.id || conn.to === to.id) continue;
+
+    const c = state.items.find(x => x.id === conn.from);
+    const d = state.items.find(x => x.id === conn.to);
+    if (!c || !d) continue;
+
+    if (segmentsIntersect(a, b, itemCenter(c), itemCenter(d))) {
+      return true;
+    }
+  }
+  return false;
+}
+
+function generateLayout(W, H) {
+  for (let attempt = 0; attempt < 2000; attempt++) {
+    const placed = [];
+    let ok = true;
+
+    for (let i = 0; i < ITEMS.length; i++) {
+      const item = ITEMS[i];
+      const size = getItemSize(item);
+      let x, y, tries = 0, found = false;
+      const minDist = Math.max(size.w, size.h) + 20;
+
+      while (tries < 200) {
+        const margin = 30;
+        x = size.w / 2 + margin + Math.random() * (W - size.w - margin * 2);
+        y = size.h / 2 + margin + Math.random() * (H - size.h - margin * 2);
+
+        const conflict = placed.some(p => {
+          const dx = p.x - x;
+          const dy = p.y - y;
+          return Math.hypot(dx, dy) < Math.max(minDist, p.minDist);
+        });
+
+        if (!conflict) { found = true; break; }
+        tries++;
+      }
+
+      if (!found) { ok = false; break; }
+      placed.push({ x, y, minDist });
+    }
+
+    if (!ok) continue;
+
+    const candidate = ITEMS.map((item, i) => {
+      const size = getItemSize(item);
+      return {
+        ...item,
+        w: size.w, h: size.h,
+        x: placed[i].x - size.w / 2,
+        y: placed[i].y - size.h / 2,
+        connectedFrom: false, connectedTo: false, el: null,
+      };
+    });
+
+    if (sequenceHasNoCrossing(candidate, CORRECT_SEQUENCE)) return candidate;
+  }
+
+  return ITEMS.map(item => {
+    const slot = FALLBACK_LAYOUT.find(s => s.id === item.id);
+    const size = getItemSize(item);
+    return {
+      ...item,
+      w: size.w, h: size.h,
+      x: slot.x * W - size.w / 2,
+      y: slot.y * H - size.h / 2,
+      connectedFrom: false, connectedTo: false, el: null,
+    };
+  });
+}
+
+function sequenceHasNoCrossing(items, seq) {
+  const lines = [];
+  for (let i = 0; i < seq.length - 1; i++) {
+    const a = items.find(c => c.id === seq[i]);
+    const b = items.find(c => c.id === seq[i + 1]);
+    if (!a || !b) return false;
+    lines.push({ a: itemCenter(a), b: itemCenter(b) });
+  }
+
+  for (let i = 0; i < lines.length; i++) {
+    for (let j = i + 1; j < lines.length; j++) {
+      if (j === i + 1) continue;
+      if (segmentsIntersect(lines[i].a, lines[i].b, lines[j].a, lines[j].b)) {
+        return false;
+      }
+    }
+  }
+
+  return true;
+}
+
+function coinSvg(item) {
+  const gid = "g-" + item.id + "-" + Math.random().toString(36).slice(2, 6);
+  const sid = "s-" + item.id + "-" + Math.random().toString(36).slice(2, 6);
+  const s = item.w;
+  return `
+    <svg viewBox="0 0 200 200" width="${s}" height="${s}" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <radialGradient id="${gid}" cx="35%" cy="30%" r="80%">
+          <stop offset="0%" stop-color="#FFFBE8"/>
+          <stop offset="25%" stop-color="${item.c1}"/>
+          <stop offset="70%" stop-color="${item.c2}"/>
+          <stop offset="100%" stop-color="${item.c3}"/>
+        </radialGradient>
+        <linearGradient id="${sid}" x1="20%" y1="10%" x2="80%" y2="90%">
+          <stop offset="0%" stop-color="#FFF" stop-opacity=".5"/>
+          <stop offset="50%" stop-color="#FFF" stop-opacity="0"/>
+          <stop offset="100%" stop-color="#000" stop-opacity=".15"/>
+        </linearGradient>
+      </defs>
+      <circle cx="100" cy="100" r="98" fill="${item.c3}" opacity=".7"/>
+      <circle cx="100" cy="100" r="94" fill="url(#${gid})" stroke="${item.c3}" stroke-width="2.5"/>
+      <circle cx="100" cy="100" r="88" fill="none" stroke="${item.c3}" stroke-width="2" stroke-dasharray="2 3" opacity=".7"/>
+      <circle cx="100" cy="100" r="78" fill="none" stroke="${item.c2}" stroke-width="1.5" opacity=".6"/>
+      <circle cx="100" cy="100" r="94" fill="url(#${sid})" opacity=".8"/>
+      <text x="100" y="118" text-anchor="middle"
+            font-family="Arial Black, sans-serif" font-size="65" font-weight="900"
+            fill="#2B1A08">${item.text}</text>
+      <ellipse cx="66" cy="58" rx="26" ry="16" fill="#FFF" opacity=".55" transform="rotate(-25 66 58)"/>
+    </svg>
+  `;
+}
+
+function billSvg(item) {
+  const gid = "g-" + item.id + "-" + Math.random().toString(36).slice(2, 6);
+  const w = item.w, h = item.h;
+  return `
+    <svg viewBox="0 0 200 130" width="${w}" height="${h}" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <linearGradient id="${gid}" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stop-color="${item.c1}"/>
+          <stop offset="50%" stop-color="${item.c2}"/>
+          <stop offset="100%" stop-color="${item.c3}"/>
+        </linearGradient>
+      </defs>
+      <rect x="4" y="4" width="192" height="122" rx="6" fill="url(#${gid})" stroke="${item.c3}" stroke-width="3"/>
+      <rect x="14" y="14" width="172" height="102" rx="4" fill="none" stroke="${item.c1}" stroke-width="2" opacity="0.6"/>
+      <text x="100" y="82" text-anchor="middle"
+            font-family="Arial Black, sans-serif" font-size="55" font-weight="900"
+            fill="#2B1A08" stroke="#FFF" stroke-width="1" paint-order="stroke fill">${item.text}</text>
+      <circle cx="30" cy="30" r="8" fill="${item.c3}" opacity="0.4"/>
+      <circle cx="170" cy="100" r="8" fill="${item.c3}" opacity="0.4"/>
+    </svg>
+  `;
+}
+
+function init() {
+  SIZES = getSizes();
+
+  const wrap = document.getElementById("game-wrap");
+  const W = wrap.clientWidth;
+  const H = wrap.clientHeight - SIZES.footerH;
+
+  const svg = document.getElementById("canvas");
+  svg.setAttribute("width", W);
+  svg.setAttribute("height", wrap.clientHeight);
+  svg.setAttribute("viewBox", `0 0 ${W} ${wrap.clientHeight}`);
+
+  state.items = generateLayout(W, H);
+
+  state.items.forEach(item => {
+    const el = document.createElement("div");
+    el.className = "coin";
+    el.style.left = item.x + "px";
+    el.style.top = item.y + "px";
+    el.style.width = item.w + "px";
+    el.style.height = item.h + "px";
+    el.innerHTML = item.type === "coin" ? coinSvg(item) : billSvg(item);
+    el.dataset.itemId = item.id;
+    el.addEventListener("pointerdown", onItemPointerDown);
+    wrap.appendChild(el);
+    item.el = el;
+  });
+
+  document.getElementById("undo-btn").addEventListener("click", undo);
+  document.getElementById("restart-btn").addEventListener("click", restart);
+
+  state.startTime = performance.now();
+}
+
+function onItemPointerDown(e) {
+  e.preventDefault();
+  const id = e.currentTarget.dataset.itemId;
+  const item = state.items.find(x => x.id === id);
+  if (!item || item.connectedFrom) return;
+
+  item.el.classList.add("dragging");
+  state.dragging = item;
+  state.dragStart = performance.now();
+
+  state.currentPath = [];
+
+  const a = itemCenter(item);
+  const layer = document.getElementById("lines-layer");
+
+  const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
+  path.setAttribute("d", `M ${a.x} ${a.y}`);
+  path.setAttribute("stroke", "#A83232");
+  path.setAttribute("stroke-width", "6");
+  path.setAttribute("stroke-linecap", "round");
+  path.setAttribute("stroke-linejoin", "round");
+  path.setAttribute("fill", "none");
+  path.setAttribute("opacity", "0.9");
+  path.id = "live-path";
+  layer.appendChild(path);
+
+  state.currentPath.push([a.x, a.y]);
+
+  document.addEventListener("pointermove", onPointerMove);
+  document.addEventListener("pointerup", onPointerUp);
+}
+
+function onPointerMove(e) {
+  if (state.dragging && state.currentPath) {
+    state.currentPath.push([e.clientX, e.clientY]);
+
+    const path = document.getElementById("live-path");
+    if (path) {
+      const d = "M " + state.currentPath.map(p => `${p[0]} ${p[1]}`).join(" L ");
+      path.setAttribute("d", d);
+    }
+  }
+
+  state.items.forEach(item => {
+    item.el.classList.remove("highlight");
+    if (!item.connectedTo && item !== state.dragging &&
+        isInsideItem(e.clientX, e.clientY, item)) {
+      item.el.classList.add("highlight");
+    }
+  });
+}
+
+function onPointerUp(e) {
+  const from = state.dragging;
+  if (!from) return;
+
+  from.el.classList.remove("dragging");
+  state.items.forEach(item => item.el.classList.remove("highlight"));
+
+  const target = state.items.find(item =>
+    !item.connectedTo && item !== from && isInsideItem(e.clientX, e.clientY, item)
+  );
+
+  if (target) {
+    makeConnection(from, target, state.dragStart);
+  } else {
+    const livePath = document.getElementById("live-path");
+    if (livePath) livePath.remove();
+  }
+
+  state.dragging = null;
+  state.dragStart = null;
+  state.currentPath = null;
+  document.removeEventListener("pointermove", onPointerMove);
+  document.removeEventListener("pointerup", onPointerUp);
+}
+
+function makeConnection(from, to, startTime) {
+  const time = (performance.now() - startTime) / 1000;
+  const crosses = willCrossExisting(from, to);
+
+  const livePath = document.getElementById("live-path");
+  if (livePath) {
+    livePath.id = "";
+    livePath.classList.add("permanent-line");
+  }
+
+  state.connections.push({ from: from.id, to: to.id, time, crosses });
+  from.connectedFrom = true;
+  to.connectedTo = true;
+  from.el.classList.add("connected");
+  to.el.classList.add("connected");
+
+  document.getElementById("undo-btn").disabled = false;
+
+  if (state.connections.length === TARGET_CONNECTIONS) {
+    document.getElementById("finish-popup").classList.add("show");
+    document.getElementById("hint").textContent = "✅ 完成啦！請拉向下撳「➡️ 去下一關」";
+
+    const seq = state.connections.map(c => c.from);
+    seq.push(state.connections[state.connections.length - 1].to);
+
+    const isOrderCorrect = JSON.stringify(seq) === JSON.stringify(CORRECT_SEQUENCE);
+    const hasCrossing = state.connections.some(c => c.crosses);
+    const isCorrect = isOrderCorrect && !hasCrossing;
+
+    const resultData = {
+      is_correct: isCorrect,
+      sequence: seq,
+      undo_count: state.undoCount,
+      has_crossing: hasCrossing,
+      is_order_correct: isOrderCorrect,
+    };
+
+    injectValueIntoStreamlitWidget(JSON.stringify(resultData));
+  }
+}
+
+function undo() {
+  if (state.connections.length === 0) return;
+  state.connections.pop();
+
+  const layer = document.getElementById("lines-layer");
+  if (layer.lastChild) layer.removeChild(layer.lastChild);
+
+  const still = new Set();
+  state.connections.forEach(c => { still.add(c.from); still.add(c.to); });
+  state.items.forEach(item => {
+    item.connectedFrom = state.connections.some(x => x.from === item.id);
+    item.connectedTo = state.connections.some(x => x.to === item.id);
+    item.el.classList.toggle("connected", still.has(item.id));
+  });
+
+  state.undoCount++;
+  document.getElementById("undo-btn").disabled = state.connections.length === 0;
+
+  if (state.connections.length < TARGET_CONNECTIONS) {
+    document.getElementById("finish-popup").classList.remove("show");
+    document.getElementById("hint").textContent = "💡 1 元硬幣 → 10 元紙幣 → 2 元硬幣 → …… → 100 元紙幣";
+  }
+}
+
+function restart() {
+  document.querySelectorAll(".coin").forEach(el => el.remove());
+  document.getElementById("lines-layer").innerHTML = "";
+  document.getElementById("finish-popup").classList.remove("show");
+  document.getElementById("hint").textContent = "💡 1 元硬幣 → 10 元紙幣 → 2 元硬幣 → …… → 100 元紙幣";
+
+  state = {
+    items: [], connections: [], undoCount: 0,
+    startTime: null, dragging: null, dragStart: null,
+    currentPath: null,
   };
+  init();
+}
 
-  console.log("=== 遊戲結果（已傳出）===");
-  console.log("image size (KB):", Math.round(compressed.length / 1024));
-
-  injectValueIntoStreamlitWidget(JSON.stringify(result));
+window.addEventListener("load", init);
+window.addEventListener("resize", () => {
+  if (state.items.length && state.connections.length === 0) {
+    restart();
+  }
 });
 </script>
 </body>
