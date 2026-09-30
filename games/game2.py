@@ -19,6 +19,14 @@ def render():
         return
 
     html_content = html_path.read_text(encoding="utf-8")
+
+    # ★ 加 timestamp 強制 reload iframe
+    ts = int(time.time() * 1000)
+    html_content = html_content.replace(
+        "</body>",
+        f"<!-- iframe_ts: {ts} --></body>"
+    )
+
     st.components.v1.html(html_content, height=900, scrolling=False)
 
     col1, col2, col3 = st.columns([1, 2, 1])
@@ -31,8 +39,8 @@ def render():
             ai_result = {"score": 0, "conditions": {}, "reasons": ["未畫"]}
 
             if not skipped and data.get("image"):
-                with st.spinner("🤖 AI 正在判斷你嘅購物籃..."):
-                    ai_result = score_cube_with_ai(data["image"])
+                # ★ 冇 spinner
+                ai_result = score_cube_with_ai(data["image"])
             elif skipped:
                 ai_result = {
                     "score": 0,
@@ -52,6 +60,7 @@ def render():
                 "reasons": ai_result.get("reasons", []),
                 "ai_reason": ai_result.get("reason", ""),
                 "stroke_count": data.get("stroke_count"),
+                "_model_used": ai_result.get("_model_used"),
             }
 
             from core.state import next_game
