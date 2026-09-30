@@ -396,7 +396,7 @@
 // 句子設定
 // ═══════════════════════════════════════════
 const SENTENCES = [
-  { display: "姨媽買豬腸 ", speak: "姨媽買豬腸 " },
+  { display: "姨媽買豬腸", speak: "姨媽買豬腸" },
   { display: "阿婆煲老火湯", speak: "阿婆煲老火湯" },
 ];
 
@@ -510,8 +510,6 @@ function initRecognition() {
   }
 
   const rec = new SR();
-
-  // ★ 粵語 lang code
   rec.lang = "yue-Hant-HK";
   rec.continuous = true;
   rec.interimResults = true;
@@ -538,7 +536,6 @@ function initRecognition() {
     if (e.error === "not-allowed") {
       alert("需要麥克風權限。請喺瀏覽器設定允許。");
     } else if (e.error === "language-not-supported") {
-      // ★ Fallback：yue-Hant-HK 唔支援 → 試 zh-HK
       console.warn("yue-Hant-HK 唔支援，試 zh-HK");
       rec.lang = "zh-HK";
       if (isRecording) {
@@ -577,9 +574,11 @@ document.getElementById("mic-btn").addEventListener("click", () => {
       recText.classList.remove("empty");
     } catch (e) { console.error(e); }
   } else {
+    // ★ 停止錄音 → 唔可以再撳 mic-btn
     try { recognition.stop(); } catch (e) {}
     isRecording = false;
-    micBtn.textContent = "🎤 再錄一次";
+    micBtn.textContent = "🎤 已完成錄音";
+    micBtn.disabled = true;
     micBtn.classList.remove("recording");
 
     results[currentIdx] = recText.textContent;
