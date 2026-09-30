@@ -6,7 +6,7 @@ import streamlit as st
 # 遊戲順序
 GAME_ORDER = [
     "intro",
-    "connect_coins",
+    "game1",          # ★ 由 connect_coins 改成 game1
     "game2",
     "game3",
     "game4",
@@ -17,7 +17,7 @@ GAME_ORDER = [
 
 # 遊戲名（中文）
 GAME_NAMES = {
-    "connect_coins": "接線遊戲",
+    "game1": "接線遊戲",         # ★ 改
     "cube_copy": "畫購物籃",
     "clock": "畫時鐘",
     "sentence_repeat": "重複句子",
@@ -27,7 +27,7 @@ GAME_NAMES = {
 
 # 每個遊戲嘅滿分
 GAME_MAX_SCORES = {
-    "connect_coins": 1,
+    "game1": 1,                  # ★ 改
     "cube_copy": 1,
     "clock": 3,
     "sentence_repeat": 2,
