@@ -27,7 +27,7 @@ def render():
     html_content = html_path.read_text(encoding="utf-8")
 
     # 顯示遊戲
-    components.html(html_content, height=630, scrolling=False)
+    components.html(html_content, height=900, scrolling=False)
 
     # 完成按鈕
     col1, col2, col3 = st.columns([1, 2, 1])
