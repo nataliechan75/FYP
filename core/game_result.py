@@ -197,3 +197,104 @@ def score_clock_with_ai(image_data_url: str) -> dict:
     """Game 3：畫時鐘（8:10）"""
     mime, img_bytes = _data_url_to_bytes(image_data_url)
     return _try_gemini_models(CLOCK_PROMPT, mime, img_bytes)
+
+# ═══════════════════════════════════════════
+# Game 6：MoCA 抽象概念評分
+# ═══════════════════════════════════════════
+ABSTRACTION_PROMPT_TEMPLATE = """
+你係受過 MoCA（Montreal Cognitive Assessment）訓練嘅評分員。
+評估玩家嘅答案係咪正確講出兩樣嘢嘅相似點。
+
+題目 1：{q1} 有咩相似？
+玩家答案：「{a1}」
+參考答案（正確方向）：都係酸嘅
+
+題目 2：{q2} 有咩相似？
+玩家答案：「{a2}」
+參考答案（正確方向）：都係海鮮 / 都係水生動物
+
+【評分標準】
+- 每題 1 分，總分 0–2 分
+- 答對（意思啱）→ 1 分
+- 答錯 / 離題 / 空白 → 0 分
+- 唔需要完全一樣字眼，只要意思對
+
+只回傳以下 JSON，唔好加其他文字、唔好加 ```json```：
+{{
+  "score": 0 到 2 嘅整數,
+  "conditions": {{
+    "question_1": true/false,
+    "question_2": true/false
+  }},
+  "reasons": ["唔符合嘅原因，用廣東話"],
+  "reason": "一句總結"
+}}
+"""
+
+
+def score_abstraction_with_ai(questions: list, answers: list) -> dict:
+    """
+    Game 6：抽象概念評分（用 AI 判斷語意）
+    questions: ["檸檬同醋", "魚同蝦"]
+    answers: ["玩家答案1", "玩家答案2"]
+    """
+    q1 = questions[0] if len(questions) > 0 else ""
+    q2 = questions[1] if len(questions) > 1 else ""
+    a1 = answers[0] if len(answers) > 0 else ""
+    a2 = answers[1] if len(answers) > 1 else ""
+
+    prompt = ABSTRACTION_PROMPT_TEMPLATE.format(
+        q1=q1, a1=a1, q2=q2, a2=a2
+    )
+
+    try:
+        genai.configure(api_key=st.secrets["GEMINI_API_KEY"])
+    except Exception as e:
+        return {
+            "score": 0,
+            "conditions": {},
+            "reasons": [f"GEMINI_API_KEY 未設定：{e}"],
+            "reason": str(e),
+        }
+
+    last_error = None
+    tried = []
+
+    for model_name in GEMINI_MODELS:
+        try:
+            model = genai.GenerativeModel(model_name)
+            response = model.generate_content(
+                prompt,
+                generation_config={
+                    "temperature": 0,
+                    "response_mime_type": "application/json",
+                },
+            )
+            text = response.text.strip()
+            if text.startswith("```"):
+                text = text.strip("`")
+                if text.startswith("json"):
+                    text = text[4:]
+                text = text.strip()
+
+            result = json.loads(text)
+            result["_model_used"] = model_name
+            return result
+
+        except Exception as e:
+            last_error = e
+            err = str(e)
+            if "429" in err:
+                tried.append(f"{model_name}: 429 爆 quota")
+            elif "404" in err:
+                tried.append(f"{model_name}: 404 唔支援")
+            else:
+                tried.append(f"{model_name}: {type(e).__name__}")
+            continue
+
+    return {
+        "score": 0,
+        "conditions": {},
+        "reasons": tried,
+        "reason": f"所有 model 都失敗。最後錯誤：{last_error}",
+    }
