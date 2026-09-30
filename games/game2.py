@@ -39,8 +39,8 @@ def render():
             ai_result = {"score": 0, "conditions": {}, "reasons": ["未畫"]}
 
             if not skipped and data.get("image"):
-                # ★ 冇 spinner
-                ai_result = score_cube_with_ai(data["image"])
+                with st.spinner("⏳ 載入中..."):
+                    ai_result = score_cube_with_ai(data["image"])
             elif skipped:
                 ai_result = {
                     "score": 0,
