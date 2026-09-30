@@ -11,7 +11,7 @@ from core.game_result import read_game_result
 from core.tts import generate_speech
 
 
-SENTENCES = ["姨媽買魚腩", "阿婆煲老火湯"]
+SENTENCES = ["姨媽買豬腸", "阿婆煲老火湯"]
 
 
 def render():
