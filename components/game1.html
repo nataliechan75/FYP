@@ -202,7 +202,7 @@
 </div>
 
 <div id="footer">
-  <div id="hint">💡 1 元硬幣 → 10 元紙幣 → 2 元硬幣 → …… → 100 元紙幣</div>
+  <div id="hint">💡硬幣與紙幣交錯連接<br> 例： 1 元硬幣 → 10 元紙幣 → 2 元硬幣 → …… → 100 元紙幣</div>
   <div id="footer-buttons">
     <button class="btn secondary" id="undo-btn" disabled>↩️ 撤銷</button>
     <button class="btn" id="restart-btn">🔄 重新開始</button>
@@ -665,7 +665,7 @@ function undo() {
 
   if (state.connections.length < TARGET_CONNECTIONS) {
     document.getElementById("finish-popup").classList.remove("show");
-    document.getElementById("hint").textContent = "💡 1 元硬幣 → 10 元紙幣 → 2 元硬幣 → …… → 100 元紙幣";
+    document.getElementById("hint").textContent = "💡硬幣與紙幣交錯連接<br> 例： 1 元硬幣 → 10 元紙幣 → 2 元硬幣 → …… → 100 元紙幣";
   }
 }
 
@@ -673,7 +673,7 @@ function restart() {
   document.querySelectorAll(".coin").forEach(el => el.remove());
   document.getElementById("lines-layer").innerHTML = "";
   document.getElementById("finish-popup").classList.remove("show");
-  document.getElementById("hint").textContent = "💡 1 元硬幣 → 10 元紙幣 → 2 元硬幣 → …… → 100 元紙幣";
+  document.getElementById("hint").textContent = "💡硬幣與紙幣交錯連接<br> 例： 1 元硬幣 → 10 元紙幣 → 2 元硬幣 → …… → 100 元紙幣";
 
   state = {
     items: [], connections: [], undoCount: 0,
