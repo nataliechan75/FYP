@@ -2,6 +2,7 @@
 第六關：抽象概念（AI 判斷語意）
 """
 import time
+import json
 import streamlit as st
 from pathlib import Path
 
@@ -20,7 +21,15 @@ def render():
 
     html_content = html_path.read_text(encoding="utf-8")
 
-    # ★ 加 timestamp 強制 reload iframe
+    # ★ 注入 Game 6 嘅 Edge TTS MP3
+    audios = st.session_state.get("game6_audio", ["", ""])
+    audio_json = json.dumps(audios)
+
+    html_content = html_content.replace(
+        "const PRELOADED_AUDIO_GAME6 = [];",
+        f"const PRELOADED_AUDIO_GAME6 = {audio_json};"
+    )
+
     ts = int(time.time() * 1000)
     html_content = html_content.replace(
         "</body>",
@@ -47,7 +56,6 @@ def render():
                 answers = data.get("player_answers", [])
 
                 if questions and answers:
-                    # ★ 冇 spinner
                     ai_result = score_abstraction_with_ai(questions, answers)
                 else:
                     ai_result = {
