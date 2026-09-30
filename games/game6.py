@@ -7,6 +7,7 @@ import streamlit as st
 from pathlib import Path
 
 from core.game_result import read_game_result, score_abstraction_with_ai
+from core.loading import show_loading_overlay
 
 
 def render():
@@ -54,10 +55,15 @@ def render():
             if not skipped:
                 questions = data.get("questions", [])
                 answers = data.get("player_answers", [])
-
+                
                 if questions and answers:
-                    with st.spinner("⏳ 載入中..."):
+                    placeholder = st.empty()
+                    with placeholder:
+                        show_loading_overlay("⏳ 載入中...")
+                    try:
                         ai_result = score_abstraction_with_ai(questions, answers)
+                    finally:
+                        placeholder.empty()
                 else:
                     ai_result = {
                         "score": 0,
