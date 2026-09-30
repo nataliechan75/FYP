@@ -393,7 +393,7 @@
 
 <script>
 // ═══════════════════════════════════════════
-// 句子設定（唔加逗號，自然啲）
+// 句子設定
 // ═══════════════════════════════════════════
 const SENTENCES = [
   { display: "姨媽買魚腩", speak: "姨媽買魚腩" },
@@ -437,55 +437,66 @@ function updateUI() {
 }
 
 // ═══════════════════════════════════════════
-// AI 讀句子
+// 播放句子（Google Translate TTS + fallback）
 // ═══════════════════════════════════════════
+let currentAudio = null;
+
+function onSpeakEnd() {
+  const readBtn = document.getElementById("read-btn");
+  const micBtn = document.getElementById("mic-btn");
+
+  readBtn.textContent = "🔊 再播一次";
+  readBtn.classList.remove("playing");
+  readBtn.disabled = false;
+
+  micBtn.disabled = false;
+  micBtn.textContent = "🎤 開始錄音";
+
+  const recText = document.getElementById("recognized-text");
+  recText.textContent = "（撳「開始錄音」講返句句子）";
+  recText.classList.add("empty");
+}
+
+function playWithBrowserTTS(text) {
+  window.speechSynthesis.cancel();
+  const utterance = new SpeechSynthesisUtterance(text);
+  utterance.lang = "zh-HK";
+  utterance.rate = 0.55;
+  utterance.pitch = 1.0;
+  utterance.volume = 1.0;
+  utterance.onend = onSpeakEnd;
+  window.speechSynthesis.speak(utterance);
+}
+
 document.getElementById("read-btn").addEventListener("click", () => {
   const sentenceObj = SENTENCES[currentIdx];
   const readBtn = document.getElementById("read-btn");
   const micBtn = document.getElementById("mic-btn");
 
+  if (currentAudio) {
+    currentAudio.pause();
+    currentAudio = null;
+  }
+
   readBtn.disabled = true;
   readBtn.textContent = "🔊 播放中...";
   readBtn.classList.add("playing");
 
-  window.speechSynthesis.cancel();
+  const text = sentenceObj.speak;
+  const url = `https://translate.google.com/translate_tts?ie=UTF-8&q=${encodeURIComponent(text)}&tl=zh-HK&client=tw-ob`;
 
-  const utterance = new SpeechSynthesisUtterance(sentenceObj.speak);
-  utterance.lang = "zh-HK";
-  utterance.rate = 0.55;
-  utterance.pitch = 1.0;
-  utterance.volume = 1.0;
-
-  const voices = window.speechSynthesis.getVoices();
-  const hkVoice = voices.find(v =>
-    v.lang === "zh-HK" ||
-    v.lang === "yue-HK" ||
-    v.lang.startsWith("zh-HK") ||
-    v.name.toLowerCase().includes("hong kong") ||
-    v.name.includes("粵語") ||
-    v.name.toLowerCase().includes("cantonese")
-  );
-  if (hkVoice) {
-    utterance.voice = hkVoice;
-    console.log("用嘅 voice:", hkVoice.name, hkVoice.lang);
-  } else {
-    console.log("搵唔到粵語 voice");
-  }
-
-  utterance.onend = () => {
-    readBtn.textContent = "🔊 再播一次";
-    readBtn.classList.remove("playing");
-    readBtn.disabled = false;
-
-    micBtn.disabled = false;
-    micBtn.textContent = "🎤 開始錄音";
-
-    const recText = document.getElementById("recognized-text");
-    recText.textContent = "（撳「開始錄音」講返句句子）";
-    recText.classList.add("empty");
+  const audio = new Audio(url);
+  currentAudio = audio;
+  audio.onended = onSpeakEnd;
+  audio.onerror = () => {
+    console.warn("Google TTS 失敗，用瀏覽器 TTS");
+    playWithBrowserTTS(text);
   };
 
-  window.speechSynthesis.speak(utterance);
+  audio.play().catch(err => {
+    console.warn("Google TTS play 失敗，用瀏覽器 TTS：", err);
+    playWithBrowserTTS(text);
+  });
 });
 
 // ═══════════════════════════════════════════
@@ -607,21 +618,68 @@ document.getElementById("submit-btn").addEventListener("click", () => {
   }
 });
 
+// ═══════════════════════════════════════════
+// 寫入 Streamlit URL
+// ═══════════════════════════════════════════
+function injectValueIntoStreamlitWidget(text) {
+  try {
+    const win = window.parent;
+    const currentUrl = new URL(win.location.href);
+    currentUrl.searchParams.set("game4_result", text);
+    win.history.replaceState({}, "", currentUrl.toString());
+    console.log("✅ 已寫入 URL");
+  } catch (e) {
+    console.log("❌ URL 寫入失敗：", e);
+  }
+}
+
+// ═══════════════════════════════════════════
+// 比對函數（唔用 AI）
+// ═══════════════════════════════════════════
+function normalize(text) {
+  return (text || "")
+    .replace(/[\s，。、！？,\.\!\?]/g, "")
+    .trim();
+}
+
+function compareSentence(correct, said) {
+  const a = normalize(correct);
+  const b = normalize(said);
+  if (!b) return false;
+  return a === b;
+}
+
 function finishGame() {
   document.getElementById("done-panel").classList.add("show");
+
+  const conditions = {
+    sentence_1: compareSentence(SENTENCES[0].display, results[0]),
+    sentence_2: compareSentence(SENTENCES[1].display, results[1]),
+  };
+
+  const score =
+    (conditions.sentence_1 ? 1 : 0) +
+    (conditions.sentence_2 ? 1 : 0);
+
+  const reasons = [];
+  if (!conditions.sentence_1) reasons.push("第 1 句唔啱");
+  if (!conditions.sentence_2) reasons.push("第 2 句唔啱");
 
   const result = {
     game_id: "game4",
     completed: true,
     sentences: SENTENCES.map(s => s.display),
     player_said: results,
+    score: score,
+    conditions: conditions,
+    reasons: reasons,
+    is_correct: score === 2,
   };
-  console.log("=== 遊戲結果 ===");
-  console.log(JSON.stringify(result, null, 2));
-}
 
-if (typeof speechSynthesis !== "undefined") {
-  speechSynthesis.onvoiceschanged = () => speechSynthesis.getVoices();
+  console.log("=== 遊戲結果（已傳出）===");
+  console.log(JSON.stringify(result, null, 2));
+
+  injectValueIntoStreamlitWidget(JSON.stringify(result));
 }
 </script>
 </body>
