@@ -6,6 +6,7 @@ import streamlit as st
 from pathlib import Path
 
 from core.game_result import read_game_result, score_cube_with_ai
+from core.loading import show_loading_overlay
 
 
 def render():
@@ -39,8 +40,13 @@ def render():
             ai_result = {"score": 0, "conditions": {}, "reasons": ["未畫"]}
 
             if not skipped and data.get("image"):
-                with st.spinner("⏳ 載入中..."):
+                placeholder = st.empty()
+                with placeholder:
+                    show_loading_overlay("⏳ 載入中...")
+                try:
                     ai_result = score_cube_with_ai(data["image"])
+                finally:
+                    placeholder.empty()
             elif skipped:
                 ai_result = {
                     "score": 0,
