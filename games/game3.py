@@ -19,6 +19,14 @@ def render():
         return
 
     html_content = html_path.read_text(encoding="utf-8")
+
+    # ★ 加 timestamp 強制 reload iframe
+    ts = int(time.time() * 1000)
+    html_content = html_content.replace(
+        "</body>",
+        f"<!-- iframe_ts: {ts} --></body>"
+    )
+
     st.components.v1.html(html_content, height=900, scrolling=False)
 
     col1, col2, col3 = st.columns([1, 2, 1])
@@ -35,8 +43,8 @@ def render():
             }
 
             if not skipped and data.get("image"):
-                with st.spinner("🤖 AI 正在判斷你嘅時鐘..."):
-                    ai_result = score_clock_with_ai(data["image"])
+                # ★ 冇 spinner
+                ai_result = score_clock_with_ai(data["image"])
             elif skipped:
                 ai_result = {
                     "score": 0,
@@ -45,7 +53,6 @@ def render():
                     "reason": "skipped",
                 }
 
-            # ★ 確保 score 係 0–3
             raw_score = ai_result.get("score", 0)
             try:
                 score = max(0, min(3, int(raw_score)))
@@ -58,7 +65,7 @@ def render():
                 "completed_at": time.strftime("%Y-%m-%d %H:%M:%S"),
                 "skipped": skipped,
                 "is_correct": score >= 2,
-                "score": score,                       # ★ 0–3 分
+                "score": score,
                 "conditions": ai_result.get("conditions", {}),
                 "reasons": ai_result.get("reasons", []),
                 "ai_reason": ai_result.get("reason", ""),
