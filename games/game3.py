@@ -43,8 +43,8 @@ def render():
             }
 
             if not skipped and data.get("image"):
-                # ★ 冇 spinner
-                ai_result = score_clock_with_ai(data["image"])
+                with st.spinner("⏳ 載入中..."):
+                    ai_result = score_clock_with_ai(data["image"])
             elif skipped:
                 ai_result = {
                     "score": 0,
