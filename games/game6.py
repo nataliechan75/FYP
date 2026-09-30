@@ -56,7 +56,8 @@ def render():
                 answers = data.get("player_answers", [])
 
                 if questions and answers:
-                    ai_result = score_abstraction_with_ai(questions, answers)
+                    with st.spinner("⏳ 載入中..."):
+                        ai_result = score_abstraction_with_ai(questions, answers)
                 else:
                     ai_result = {
                         "score": 0,
