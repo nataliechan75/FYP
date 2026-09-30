@@ -34,7 +34,7 @@ if "game4_audio" not in st.session_state:
     audios = []
     for s in SENTENCES_GAME4:
         try:
-            mp3_bytes = generate_speech(s, voice_key="female_2", rate="-20%")
+            mp3_bytes = generate_speech(s, voice_key="female_2", rate="-30%")
             b64 = base64.b64encode(mp3_bytes).decode("utf-8")
             audios.append(f"data:audio/mp3;base64,{b64}")
         except Exception:
@@ -46,7 +46,7 @@ if "game6_audio" not in st.session_state:
     audios6 = []
     for s in SENTENCES_GAME6:
         try:
-            mp3_bytes = generate_speech(s, voice_key="female_2", rate="-20%")
+            mp3_bytes = generate_speech(s, voice_key="female_2", rate="-30%")
             b64 = base64.b64encode(mp3_bytes).decode("utf-8")
             audios6.append(f"data:audio/mp3;base64,{b64}")
         except Exception:
