@@ -437,8 +437,10 @@ function updateUI() {
 }
 
 // ═══════════════════════════════════════════
-// 播放句子（Google Translate TTS + fallback）
+// 播放句子（Edge TTS 預載 MP3）
 // ═══════════════════════════════════════════
+const PRELOADED_AUDIO = [];   // ← Streamlit 會 replace 呢行
+
 let currentAudio = null;
 
 function onSpeakEnd() {
@@ -457,21 +459,8 @@ function onSpeakEnd() {
   recText.classList.add("empty");
 }
 
-function playWithBrowserTTS(text) {
-  window.speechSynthesis.cancel();
-  const utterance = new SpeechSynthesisUtterance(text);
-  utterance.lang = "zh-HK";
-  utterance.rate = 0.55;
-  utterance.pitch = 1.0;
-  utterance.volume = 1.0;
-  utterance.onend = onSpeakEnd;
-  window.speechSynthesis.speak(utterance);
-}
-
 document.getElementById("read-btn").addEventListener("click", () => {
-  const sentenceObj = SENTENCES[currentIdx];
   const readBtn = document.getElementById("read-btn");
-  const micBtn = document.getElementById("mic-btn");
 
   if (currentAudio) {
     currentAudio.pause();
@@ -482,20 +471,28 @@ document.getElementById("read-btn").addEventListener("click", () => {
   readBtn.textContent = "🔊 播放中...";
   readBtn.classList.add("playing");
 
-  const text = sentenceObj.speak;
-  const url = `https://translate.google.com/translate_tts?ie=UTF-8&q=${encodeURIComponent(text)}&tl=zh-HK&client=tw-ob`;
+  const audioSrc = PRELOADED_AUDIO[currentIdx];
 
-  const audio = new Audio(url);
+  if (!audioSrc) {
+    console.warn("冇預載音頻");
+    alert("播放失敗，請重新載入頁面。");
+    onSpeakEnd();
+    return;
+  }
+
+  const audio = new Audio(audioSrc);
   currentAudio = audio;
   audio.onended = onSpeakEnd;
   audio.onerror = () => {
-    console.warn("Google TTS 失敗，用瀏覽器 TTS");
-    playWithBrowserTTS(text);
+    console.error("Edge TTS 音頻失敗");
+    alert("播放失敗。");
+    onSpeakEnd();
   };
 
   audio.play().catch(err => {
-    console.warn("Google TTS play 失敗，用瀏覽器 TTS：", err);
-    playWithBrowserTTS(text);
+    console.error("Play 失敗：", err);
+    alert("播放失敗。");
+    onSpeakEnd();
   });
 });
 
