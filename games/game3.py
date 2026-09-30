@@ -6,7 +6,7 @@ import streamlit as st
 from pathlib import Path
 
 from core.game_result import read_game_result, score_clock_with_ai
-
+from core.loading import show_loading_overlay
 
 def render():
     if "game3_start" not in st.session_state:
@@ -43,8 +43,13 @@ def render():
             }
 
             if not skipped and data.get("image"):
-                with st.spinner("⏳ 載入中..."):
+                placeholder = st.empty()
+                with placeholder:
+                    show_loading_overlay("⏳ 載入中...")
+                try:
                     ai_result = score_clock_with_ai(data["image"])
+                finally:
+                    placeholder.empty() 
             elif skipped:
                 ai_result = {
                     "score": 0,
