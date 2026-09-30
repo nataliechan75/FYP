@@ -13,7 +13,7 @@ from core.state import (
     GAME_MAX_SCORES,
 )
 from core.tts import generate_speech
-from games import connect_coins, game2, game3, game4, game5, game6
+from games import game1, game2, game3, game4, game5, game6
 
 # 頁面設定
 st.set_page_config(
@@ -82,7 +82,7 @@ if current == "intro":
 # 遊戲
 # ═══════════════════════════════════════════
 elif current == "connect_coins":
-    connect_coins.render()
+    game1.render()
 
 elif current == "game2":
     game2.render()
