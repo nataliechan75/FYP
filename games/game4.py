@@ -1,14 +1,12 @@
 """
-第四關：重複句子（Edge TTS + 文字比對）
+第四關：重複句子（Edge TTS 預先喺 app.py 生成）
 """
 import time
-import base64
 import json
 import streamlit as st
 from pathlib import Path
 
 from core.game_result import read_game_result
-from core.tts import generate_speech
 
 
 SENTENCES = ["姨媽買豬腸", "阿婆煲老火湯"]
@@ -24,27 +22,22 @@ def render():
         st.error("❌ 搵唔到 game4.html")
         return
 
-    # ★ 預先生成 MP3（cache 喺 session_state）
-    if "game4_audio" not in st.session_state:
-        with st.spinner("🎵 生成語音中（第一次要等幾秒）..."):
-            audios = []
-            for s in SENTENCES:
-                try:
-                    mp3_bytes = generate_speech(s, voice_key="female_2", rate="-20%")
-                    b64 = base64.b64encode(mp3_bytes).decode("utf-8")
-                    audios.append(f"data:audio/mp3;base64,{b64}")
-                except Exception as e:
-                    st.error(f"❌ 生成語音失敗：{e}")
-                    audios.append("")
-            st.session_state.game4_audio = audios
-
     html_content = html_path.read_text(encoding="utf-8")
 
-    # ★ 將音頻 base64 注入 HTML
-    audio_json = json.dumps(st.session_state.game4_audio)
+    # ★ 用 app.py 預先準備好嘅 MP3（唔使再生成）
+    audios = st.session_state.get("game4_audio", ["", ""])
+    audio_json = json.dumps(audios)
+
     html_content = html_content.replace(
         "const PRELOADED_AUDIO = [];",
         f"const PRELOADED_AUDIO = {audio_json};"
+    )
+
+    # ★ 加 timestamp 強制 reload iframe
+    ts = int(time.time() * 1000)
+    html_content = html_content.replace(
+        "</body>",
+        f"<!-- iframe_ts: {ts} --></body>"
     )
 
     st.components.v1.html(html_content, height=900, scrolling=False)
